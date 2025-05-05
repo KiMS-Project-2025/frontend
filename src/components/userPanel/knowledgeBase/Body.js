@@ -12,6 +12,10 @@ const Body = ({ filteredDocuments, setFilteredDocuments }) => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];  // Lấy file được chọn
         if (file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file');
+                return; // Nếu không phải PDF thì không xử lý
+            }
             setSelectedFile(file);  // Lưu file vào state
             setFileName(file.name);  // Lưu tên file vào state
             setShowConfirm(true);
@@ -24,15 +28,14 @@ const Body = ({ filteredDocuments, setFilteredDocuments }) => {
         document.getElementById('fileInput').click();
     };
 
-    // Hàm xử lý thêm file vào FileList
     const handleConfirmFile = () => {
         const newFile = {
-          id: filteredDocuments.length + 1,  // Tạo id mới cho file
-          title: fileName,  // Dùng tên file làm tiêu đề
-          shortDescription: `File: ${fileName}`,
-          uploadDate: new Date().toLocaleDateString(),  // Ngày tải lên
-          ownFile: true,  // Đánh dấu đây là file đã chọn
-          file: selectedFile,  // Lưu file PDF vào tài liệu
+            id: filteredDocuments.length + 1,  // Tạo id mới cho file
+            title: fileName,  // Dùng tên file làm tiêu đề
+            shortDescription: `File: ${fileName}`,
+            uploadDate: new Date().toLocaleDateString(),  // Ngày tải lên
+            ownFile: true,  // Đánh dấu đây là file đã chọn
+            file: selectedFile,  // Lưu file PDF vào tài liệu
         };
     
         // Cập nhật danh sách tài liệu
@@ -42,7 +45,10 @@ const Body = ({ filteredDocuments, setFilteredDocuments }) => {
         setSelectedFile(null);
         setFileName('');
         setShowConfirm(false);  // Ẩn trang xác nhận
-      };
+    
+        // Thông báo thành công
+        alert("File uploaded successfully!");
+    };
 
       const handleCancelFile = () => {
         setShowConfirm(false);  // Ẩn trang xác nhận
