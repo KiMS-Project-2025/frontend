@@ -11,12 +11,6 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // Hàm để tạo ảnh thumbnail từ file PDF
   const generateThumbnail = (pdfFile, id) => {
-    // Kiểm tra loại file có phải là một Blob hợp lệ không
-    if (!(pdfFile instanceof Blob)) {
-      console.error('File is not a Blob', pdfFile);
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = async (e) => {
       const pdfData = new Uint8Array(e.target.result);
@@ -80,16 +74,17 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // Hàm xử lý tải xuống file
   const handleDownloadFile = (file) => {
-    if (!file) return; // Thêm dòng này
-  
-    const url = URL.createObjectURL(file);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name || 'download.pdf';
-    document.body.appendChild(a); // Thêm bước này
-    a.click();
-    document.body.removeChild(a); // Dọn dẹp
-    URL.revokeObjectURL(url);
+    console.log("File to download:", file); // Kiểm tra xem file có phải là Blob hợp lệ không
+    if (file && file instanceof Blob) {
+        const url = URL.createObjectURL(file);  // Tạo URL tạm thời cho file
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name || 'download.pdf';  // Tên file khi tải xuống, mặc định 'download.pdf'
+        a.click();  // Trigger tải xuống
+        URL.revokeObjectURL(url);  // Giải phóng URL tạm thời
+    } else {
+        console.error('Invalid file for download', file);
+    }
 };
 
   return (
@@ -141,6 +136,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             docId={doc.id}
             isMenuVisible={activeMenu === doc.id}
             menuPosition={menuPosition}
+            fileData={doc}
             onEdit={handleEditName}
             onDelete={handleDeleteFile}
             onDownload={handleDownloadFile.bind(null, doc.file)}
