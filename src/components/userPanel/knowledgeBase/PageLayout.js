@@ -23,7 +23,7 @@ const PageLayout = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen pb-6">
       {/* Header */}
       <div>
         <Header 

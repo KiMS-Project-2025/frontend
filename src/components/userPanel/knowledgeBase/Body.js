@@ -69,7 +69,10 @@ const Body = ({ filteredDocuments, setFilteredDocuments }) => {
 
             {/* File List */}
             <div className="px-6">
-                <FileList filteredDocuments={filteredDocuments} />
+                <FileList 
+                    filteredDocuments={filteredDocuments} 
+                    setFilteredDocuments={setFilteredDocuments} 
+                />
             </div>
 
             {/* File Input (ẩn đi) */}

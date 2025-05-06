@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FileMenu = ({ docId, onEdit, onDelete, onDownload, isMenuVisible, menuPosition, onClose  }) => {
+const FileMenu = ({ docId, onEdit, onDelete, onDownload, isMenuVisible, menuPosition }) => {
   return (
     isMenuVisible && (
       <div
@@ -9,7 +9,6 @@ const FileMenu = ({ docId, onEdit, onDelete, onDownload, isMenuVisible, menuPosi
           top: `${menuPosition?.top + 15}px`,  // Dịch chuyển menu xuống dưới nút 3 chấm
           left: `${menuPosition?.left}px`,     // Căn chỉnh menu theo nút ba chấm
         }}
-        onMouseLeave={onClose}
       >
         <div className="text-sm text-gray-700">
           <button
@@ -25,7 +24,10 @@ const FileMenu = ({ docId, onEdit, onDelete, onDownload, isMenuVisible, menuPosi
             Delete
           </button>
           <button
-            onClick={() => onDownload(docId)}
+            onClick={(e) => {
+                e.stopPropagation(); 
+                onDownload(docId);
+            }}
             className="block w-full text-left py-1 px-2 hover:bg-gray-100 rounded-md"
           >
             Download

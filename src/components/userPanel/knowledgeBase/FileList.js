@@ -80,13 +80,17 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // Hàm xử lý tải xuống file
   const handleDownloadFile = (file) => {
-    const url = URL.createObjectURL(file);  // Tạo URL tạm thời cho file
+    if (!file) return; // Thêm dòng này
+  
+    const url = URL.createObjectURL(file);
     const a = document.createElement('a');
     a.href = url;
-    a.download = file.name;  // Tên file khi tải xuống
-    a.click();  // Trigger tải xuống
-    URL.revokeObjectURL(url);  // Giải phóng URL tạm thời
-  };
+    a.download = file.name || 'download.pdf';
+    document.body.appendChild(a); // Thêm bước này
+    a.click();
+    document.body.removeChild(a); // Dọn dẹp
+    URL.revokeObjectURL(url);
+};
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -139,7 +143,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             menuPosition={menuPosition}
             onEdit={handleEditName}
             onDelete={handleDeleteFile}
-            onDownload={handleDownloadFile}
+            onDownload={handleDownloadFile.bind(null, doc.file)}
           />
         </div>
       ))}
