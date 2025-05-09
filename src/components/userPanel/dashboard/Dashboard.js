@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './header/Header';
 import Sidebar from './sidebar/Sidebar';
 import FrequentSites from './frequent-sites/FrequentSites';
-import documents from '../../../data/documentData';
+import { API_URL } from '../../../constant';
 
 const Dashboard = () => {
   const [recentDocuments, setRecentDocuments] = useState([]);
@@ -12,7 +11,29 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setRecentDocuments(documents);
+    const fetchDocuments = async () => {
+      try {
+        const response = await fetch(`${API_URL}/home`);
+        const data = await response.json();
+        console.log('API Response:', data); // Debug log
+
+        if (!data || !Array.isArray(data)) {
+          console.error('Invalid data format:', data);
+          return;
+        }
+
+        setRecentDocuments(data.map(doc => ({
+          ...doc,
+          starred: false,
+          shortDescription: doc.title,
+          uploadDate: new Date(doc.modified_at).toLocaleDateString()
+        })));
+      } catch (error) {
+        console.error('Error fetching documents:', error);
+      }
+    };
+
+    fetchDocuments();
   }, []);
 
   // Toggle the "starred" state of the document
@@ -27,19 +48,32 @@ const Dashboard = () => {
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
   const handleCardClick = (docId) => {
-    navigate(`/page-layout/${docId}`);  // Điều hướng đến trang PageLayout với documentId
+    navigate(`/page-layout/${docId}`);
   };
 
   // Function to handle adding a new site
-  const addFrequentSite = (siteName) => {
-    const newSite = {
-      id: recentDocuments.length + 1,
-      title: siteName,
-      shortDescription: `New site: ${siteName}`,
-      views: [],
-      starred: false,
-    };
-    setRecentDocuments([...recentDocuments, newSite]);
+  const addFrequentSite = async (siteName) => {
+    try {
+      const response = await fetch(`${API_URL}/document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ title: siteName }).toString(),
+      });
+      const newDoc = await response.json();
+      setRecentDocuments(prev => [
+        ...prev,
+        {
+          ...newDoc,
+          starred: false,
+          shortDescription: newDoc.title,
+          uploadDate: new Date(newDoc.modified_at).toLocaleDateString(),
+        },
+      ]);
+    } catch (error) {
+      console.error('Error creating new document:', error);
+    }
   };
 
   return (
@@ -57,9 +91,9 @@ const Dashboard = () => {
 
         {/* Frequent Sites Component: Truyền các props vào FrequentSites */}
         <FrequentSites 
-        documents={recentDocuments} 
-        handleStar={handleStar}
-        onCardClick={(handleCardClick)}
+          documents={recentDocuments} 
+          handleStar={handleStar}
+          onCardClick={handleCardClick}
         />
       </div>
     </div>

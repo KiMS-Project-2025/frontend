@@ -3,14 +3,16 @@ import Filters from './Filters';  // Import Filters component
 import FileList from './FileList';  // Import FileList component
 import AddFileButton from './AddFileButton';  // Import AddFileButton component
 
-const Body = ({ filteredDocuments, setFilteredDocuments }) => {
+const Body = ({ filteredDocuments, setFilteredDocuments, documentId }) => {
 
     return (
         <div>
             {/* Body */}
             <div className="flex justify-between p-6">
                 {/* Left: Add File Button */}
-                <AddFileButton setFilteredDocuments={setFilteredDocuments} />
+                <AddFileButton
+                    setFilteredDocuments={setFilteredDocuments}
+                    documentId={documentId} />
 
                 {/* Right: Filters */}
                 <Filters />
@@ -18,9 +20,10 @@ const Body = ({ filteredDocuments, setFilteredDocuments }) => {
 
             {/* File List */}
             <div className="px-6">
-                <FileList 
-                    filteredDocuments={filteredDocuments} 
-                    setFilteredDocuments={setFilteredDocuments} 
+                <FileList
+                    filteredDocuments={filteredDocuments}
+                    setFilteredDocuments={setFilteredDocuments}
+                    documentId={documentId}
                 />
             </div>
 

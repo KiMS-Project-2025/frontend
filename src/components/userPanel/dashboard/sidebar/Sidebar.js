@@ -39,7 +39,7 @@ const Sidebar = ({ recentDocuments, handleStar, addFrequentSite }) => {
         {isModalOpen && (
           <div className="fixed inset-0 flex justify-center items-center bg-gray-500 bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-              <h2 className="text-xl font-semibold mb-4">Create New Site</h2>
+              <h2 className="text-xl font-semibold mb-4">Create New Document</h2>
               <input
                 type="text"
                 placeholder="Enter site name"

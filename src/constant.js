@@ -1,0 +1,1 @@
+export const API_URL = 'https://kims-backend.onrender.com';
