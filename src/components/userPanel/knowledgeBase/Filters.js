@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 
+const CATEGORY_OPTIONS = [
+  { id: '1', name: 'IT' },
+  { id: '2', name: 'BA' },
+  { id: '3', name: 'EE' },
+  { id: '4', name: 'EN' },
+];
+
 const Filters = ({ handleSearch }) => {
   // State để quản lý bộ lọc
-  const [category, setCategory] = useState('All Categories');
-  const [sortOrder, setSortOrder] = useState('Newest First');
+  const [category, setCategory] = useState('all');
+  const [sortOrder, setSortOrder] = useState('newest');
 
   // Hàm xử lý thay đổi bộ lọc
   const handleCategoryChange = (e) => {
@@ -29,9 +36,10 @@ const Filters = ({ handleSearch }) => {
           value={category}
           onChange={handleCategoryChange}
         >
-          <option>All Categories</option>
-          <option>Category 1</option>
-          <option>Category 2</option>
+          <option value="all">All Categories</option>
+          {CATEGORY_OPTIONS.map(cat => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
         </select>
       </div>
       <div className="flex items-center">
@@ -41,15 +49,15 @@ const Filters = ({ handleSearch }) => {
           value={sortOrder}
           onChange={handleSortOrderChange}
         >
-          <option>Newest First</option>
-          <option>Oldest First</option>
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
         </select>
       </div>
 
       {/* Nút Search */}
       <button
         onClick={handleSearchClick}
-        className="ml-4 p-2 bg-blue-600 text-white rounded-lg"
+        className="ml-4 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
         Search
       </button>

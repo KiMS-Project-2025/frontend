@@ -3,15 +3,25 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { FaEllipsisV, FaFilePdf } from 'react-icons/fa';
 import FileMenu from './FileMenu';  // Import component menu ba chấm
 import { API_URL } from '../../../constant';
+import ModalCategory from './modalCategory';
 
 // Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+const CATEGORY_MAP = {
+  '1': 'IT',
+  '2': 'BA',
+  '3': 'EE',
+  '4': 'EN',
+};
 
 const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const [thumbnails, setThumbnails] = useState({});  // State để lưu ảnh thumbnail của các file PDF
   const [activeMenu, setActiveMenu] = useState(null);  // State để quản lý menu ba chấm
   const [menuPosition, setMenuPosition] = useState(null); // State để lưu vị trí của menu
   const [loadingThumbnails, setLoadingThumbnails] = useState({});
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryEditDoc, setCategoryEditDoc] = useState(null);
 
   // Category options
   const CATEGORY_OPTIONS = [
@@ -27,27 +37,37 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
     try {
       setLoadingThumbnails(prev => ({ ...prev, [id]: true }));
-      
+
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdfData = new Uint8Array(arrayBuffer);
-      
+
       const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
       const page = await pdfDoc.getPage(1);
+
+      // Get the original viewport
+      const originalViewport = page.getViewport({ scale: 2.5 });
       
-      const viewport = page.getViewport({ scale: 0.5 });
+      // Calculate scale to fit width
+      const scale = 2;
+      const viewport = page.getViewport({ scale });
+
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
-      
-      canvas.height = viewport.height;
+
+      // Set canvas dimensions
       canvas.width = viewport.width;
-      
+      canvas.height = viewport.height;
+
+      // Render only the top portion of the page
       await page.render({
         canvasContext: context,
-        viewport: viewport
+        viewport: viewport,
+        transform: [1, 0, 0, 1, 0, 0], // No translation, show from top
+        intent: 'display'
       }).promise;
 
       const imgUrl = canvas.toDataURL('image/jpeg', 0.8);
-      
+
       setThumbnails(prev => ({
         ...prev,
         [id]: imgUrl
@@ -63,8 +83,22 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   useEffect(() => {
     const generateThumbnailsForDocuments = async () => {
       for (const doc of filteredDocuments) {
-        if (doc.ownFile && !thumbnails[doc.id] && doc.file instanceof Blob) {
-          await generateThumbnail(doc.file, doc.id);
+        if (!thumbnails[doc.id]) {
+          try {
+            setLoadingThumbnails(prev => ({ ...prev, [doc.id]: true }));
+
+            // Fetch PDF từ API
+            const response = await fetch(`${API_URL}/file?id=${doc.id}`);
+            if (!response.ok) throw new Error(`Failed to fetch file ${doc.id}`);
+            const blob = await response.blob();
+
+            // Gọi generateThumbnail
+            await generateThumbnail(blob, doc.id);
+          } catch (error) {
+            console.error("Error loading PDF for thumbnail:", error);
+          } finally {
+            setLoadingThumbnails(prev => ({ ...prev, [doc.id]: false }));
+          }
         }
       }
     };
@@ -130,35 +164,37 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
     }
   };
 
-  // Hàm xử lý sửa category file
-  const handleEditCategory = async (id) => {
+  // Hàm xử lý sửa category file (now opens modal)
+  const handleEditCategory = (id) => {
     const doc = filteredDocuments.find((doc) => doc.id === id);
     if (!doc) return;
-    const currentCategory = doc.category || '';
-    const newCategory = window.prompt(
-      `Select new category (enter number):\n` +
-        CATEGORY_OPTIONS.map((opt, idx) => `${idx + 1}. ${opt.name}`).join('\n'),
-      CATEGORY_OPTIONS.findIndex(opt => opt.id === currentCategory) + 1
-    );
-    const selectedOption = CATEGORY_OPTIONS[parseInt(newCategory, 10) - 1];
-    if (selectedOption) {
-      try {
-        const formData = new URLSearchParams();
-        formData.append('id', id);
-        formData.append('cid', selectedOption.id);
+    setCategoryEditDoc(doc);
+    setShowCategoryModal(true);
+  };
 
-        const response = await fetch(`${API_URL}/file`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
-        });
-        if (!response.ok) throw new Error('Failed to update category');
-        setFilteredDocuments((prev) =>
-          prev.map((doc) => doc.id === id ? { ...doc, category: selectedOption.id } : doc)
-        );
-      } catch (error) {
-        alert('Error updating category: ' + error.message);
-      }
+  // Save handler for ModalCategory
+  const handleSaveCategory = async (id) => {
+    if (!categoryEditDoc) return;
+    try {
+      const formData = new URLSearchParams();
+      formData.append('id', categoryEditDoc.id);
+      formData.append('cid', id);
+      const response = await fetch(`${API_URL}/file`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString(),
+      });
+      if (!response.ok) throw new Error('Failed to update category');
+
+      setFilteredDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === categoryEditDoc.id ? { ...doc, category: getNameById(id) } : doc
+        )
+      );
+      setShowCategoryModal(false);
+      setCategoryEditDoc(null);
+    } catch (error) {
+      alert('Error updating category: ' + error.message);
     }
   };
 
@@ -216,26 +252,47 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
     }
   };
 
+  const getNameById = (id) => {
+    const category = CATEGORY_OPTIONS.find(item => item.id === id);
+    return category ? category.name : null;
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredDocuments.map((doc) => (
-        <div key={doc.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div key={doc.id} className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden">
           {/* Header with PDF icon and title */}
-          <div className="p-3 flex justify-between items-center">
+          <div className="p-4 flex justify-between items-center border-b border-gray-100">
             <div className="flex items-center">
-              <FaFilePdf className="text-red-500 text-lg" />
-              <h3 className="ml-2 font-medium text-gray-800">{doc.title || "Untitled Document"}</h3>
+              <FaFilePdf className="text-red-500 text-xl" />
+              <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[180px]">{doc.title || "Untitled Document"}</h3>
             </div>
-            <button
-              onClick={(e) => toggleMenu(e, doc.id)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <FaEllipsisV />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Category tag */}
+              {(getNameById(doc.cid)) && (
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${
+                    getNameById(doc.cid) === 'IT' ? 'bg-blue-500 text-white' :
+                    getNameById(doc.cid) === 'BA' ? 'bg-green-500 text-white' :
+                    getNameById(doc.cid) === 'EE' ? 'bg-yellow-500 text-gray-800' :
+                    getNameById(doc.cid) === 'EN' ? 'bg-indigo-500 text-white' :
+                    'bg-red-400 text-white'
+                  }`}
+                >
+                  {getNameById(doc.cid)}
+                </span>
+              )}
+              <button
+                onClick={(e) => toggleMenu(e, doc.id)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition"
+              >
+                <FaEllipsisV />
+              </button>
+            </div>
           </div>
 
           {/* PDF thumbnail preview */}
-          <div className="h-48 bg-gray-50 flex items-center justify-center">
+          <div className="h-fix bg-gray-50 flex items-center justify-center">
             {loadingThumbnails[doc.id] ? (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-2"></div>
@@ -246,6 +303,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
                 src={thumbnails[doc.id]}
                 alt="PDF Thumbnail"
                 className="w-full h-32 object-cover rounded-lg"
+                style={{ objectPosition: 'top' }}
               />
             ) : (
               <div className="flex flex-col items-center justify-center text-gray-400">
@@ -258,10 +316,10 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           {/* Document title/description and upload date */}
           <div className="p-4">
             <p className="text-sm text-gray-700 font-medium mb-1">
-              {doc.shortDescription || doc.title || "Untitled Document"}
+              {doc.shortDescription || doc.description || "Untitled Document"}
             </p>
             <div className="text-xs text-gray-400">
-              Uploaded: {doc.uploadDate || "Date not available"}
+              Uploaded: {new Date(doc.modified_at).toLocaleString() || "Date not available"}
             </div>
           </div>
 
@@ -279,6 +337,12 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           />
         </div>
       ))}
+      <ModalCategory
+        isOpen={showCategoryModal}
+        onClose={() => { setShowCategoryModal(false); setCategoryEditDoc(null); }}
+        onSave={handleSaveCategory}
+        initialCategory={categoryEditDoc ? categoryEditDoc.category : ''}
+      />
     </div>
   );
 };

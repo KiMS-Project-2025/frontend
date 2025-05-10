@@ -3,6 +3,12 @@ import React, { useState } from 'react';
 import { FaEdit, FaTrash, FaDownload, FaInfoCircle } from 'react-icons/fa';
 import { API_URL } from '../../../constant';
 
+const CATEGORY_OPTIONS = [
+  { id: '1', name: 'IT' },
+  { id: '2', name: 'BA' },
+  { id: '3', name: 'EE' },
+  { id: '4', name: 'EN' },
+];
 
 const FileMenu = ({ docId, isMenuVisible, menuPosition, onEdit, onDelete, onDownload, onEditDescription, onEditCategory }) => {
     const [showInfo, setShowInfo] = useState(false);  // Trạng thái hiển thị thông tin
@@ -22,6 +28,12 @@ const FileMenu = ({ docId, isMenuVisible, menuPosition, onEdit, onDelete, onDown
             }
         }
         setShowInfo((prev) => !prev);
+    };
+
+    // Get category name from ID
+    const getCategoryName = (categoryId) => {
+        const category = CATEGORY_OPTIONS.find(opt => opt.id === categoryId);
+        return category ? category.name : categoryId;
     };
 
     // Hàm đóng modal thông tin
@@ -112,7 +124,7 @@ const FileMenu = ({ docId, isMenuVisible, menuPosition, onEdit, onDelete, onDown
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-medium text-gray-600">Category:</span>
-                                        <span className="text-gray-800">{infoData.cid}</span>
+                                        <span className="text-gray-800">{getCategoryName(infoData.cid)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-medium text-gray-600">Author:</span>

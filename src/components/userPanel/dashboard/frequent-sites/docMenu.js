@@ -48,7 +48,7 @@ const DocMenu = ({ docId, docTitle, menuPosition, isMenuVisible, onEditSuccess, 
   const toggleInfo = async () => {
     if (!showInfo) {
       try {
-        const response = await fetch(`${API_URL}/document?id=${docId}&detail=1`);
+        const response = await fetch(`${API_URL}/document?id=${docId}`);
         if (!response.ok) throw new Error('Failed to fetch document info');
         const data = await response.json();
         setInfoData(data);

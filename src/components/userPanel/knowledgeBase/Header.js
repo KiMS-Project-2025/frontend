@@ -23,7 +23,7 @@ const Header = ({ title, toggleDropdown, dropdownOpen, documentTitle, onSearchRe
         <header className="sticky top-0 flex justify-between items-center mb-5 bg-custom-blue p-3 shadow-md">
             {/* Left: Dashboard title */}
             <div className="text-left">
-                <h1 className="text-2xl font-semibold text-gray-800">{documentTitle || title || 'Dashboard'}</h1>
+                <h1 className="text-2xl font-bold text-gray-800">{documentTitle || title || 'Dashboard'}</h1>
             </div>
 
             {/* Center: Search bar */}
