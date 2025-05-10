@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         
         {/* Điều hướng tới trang PageLayout cho mỗi tài liệu */}
-        <Route path="/page-layout/:documentId" element={<PageLayout />} />
+        <Route path="/page-layout/:id" element={<PageLayout />} />
       </Routes>
     </Router>
   );

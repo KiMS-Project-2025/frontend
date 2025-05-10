@@ -1,26 +1,56 @@
 // src/components/knowledgeBase/PageLayout.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom'; 
-import fileData from '../../../data/fileData'; // Import fileData (dữ liệu tài liệu)
 import Header from './Header';
 import Body from './Body';  // Import Body component
-import documents from '../../../data/documentData';
+import { API_URL } from '../../../constant';
 
-const PageLayout = () => {
-  const { documentId } = useParams();
-
-  // Tìm tài liệu theo ID từ fileData
-  const document = documents.find((doc) => doc.id === parseInt(documentId));
-
-  // State để quản lý tìm kiếm và danh sách tài liệu đã lọc
-  const [filteredDocuments, setFilteredDocuments] = useState(fileData);
-  const [fileName] = useState('');  // Lưu tên file PDF
-
+const PageLayout = () => { 
+  const { id } = useParams();
+  const [document, setDocument] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [fileName] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [error, setError] = useState('');
+
+
+  useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        setError('');
+        if (!id) {
+          setError('No document ID provided');
+          return;
+        }
+        const response = await fetch(`${API_URL}/document?id=${id}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        if (!data || !data.id) {
+          setError('Document not found');
+          setDocument(null);
+          setFilteredDocuments([]);
+        } else {
+          setDocument(data);
+          setFiles(data.files || []);
+          setFilteredDocuments(data.files || []);
+        }
+      } catch (error) {
+        setError('Error fetching document');
+        setDocument(null);
+        setFilteredDocuments([]);
+      }
+    };
+
+    if (id) fetchDocument();
+  }, [id]);
 
   const toggleDropdown = () => {
-    setDropdownOpen((prev) => !prev); // Đảo ngược trạng thái dropdown
+    setDropdownOpen((prev) => !prev);
   };
+
+  if (error) return <div>{error}</div>;
+  if (!document) return <div>Document not found</div>;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-6">
@@ -37,8 +67,19 @@ const PageLayout = () => {
       <Body 
         filteredDocuments={filteredDocuments} 
         setFilteredDocuments={setFilteredDocuments}
+        documentId={id}
       />
 
+      <div>
+        <h2>Files</h2>
+        <ul>
+          {files.map(file => (
+            <li key={file.id}>
+              <strong>{file.title}</strong> - {file.author} - {file.description}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

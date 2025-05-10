@@ -1,7 +1,14 @@
 import React, {useState} from 'react';
 import { FaPlus } from 'react-icons/fa';
+import { API_URL } from '../../../constant';
+const CATEGORY_OPTIONS = [
+  { id: '1', name: 'IT' },
+  { id: '2', name: 'BA' },
+  { id: '3', name: 'EE' },
+  { id: '4', name: 'EN' },
+];
 
-const AddFiletButton = ({ setFilteredDocuments }) => {
+const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -11,6 +18,7 @@ const AddFiletButton = ({ setFilteredDocuments }) => {
     author: '',
     file: null, // Để lưu file
   });
+  const [categories] = useState(CATEGORY_OPTIONS);
 
   // Hàm xử lý sự kiện khi người dùng thay đổi giá trị form
   const handleChange = (e) => {
@@ -31,22 +39,43 @@ const AddFiletButton = ({ setFilteredDocuments }) => {
   };
 
   // Hàm xử lý khi người dùng submit form
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const newDocument = {
-      id: Date.now(), // Dùng thời gian để tạo ID duy nhất
+
+    // Prepare FormData for API
+    const formDataToSend = new FormData();
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('cid', formData.category); // category id
+    formDataToSend.append('author', formData.author);
+    formDataToSend.append('did', documentId); // You need to provide the current document id here
+    formDataToSend.append('description', formData.content);
+    console.log('Uploading:', {
       title: formData.title,
-      shortDescription: formData.content,
-      uploadDate: new Date().toLocaleDateString(),
-      ownFile: true,
-      file: formData.file,
-    };
+      cid: formData.category,
+      author: formData.author,
+      did: documentId,
+      description: formData.content,
+      file: formData.file
+    });
+    if (formData.file) {
+      formDataToSend.append('attachment', formData.file);
+    }
 
-    // Thêm tài liệu mới vào filteredDocuments
-    setFilteredDocuments((prevDocs) => [...prevDocs, newDocument]);
+    try {
+      const response = await fetch(`${API_URL}/file`, {
+        method: 'POST',
+        body: formDataToSend,
+      });
+      if (!response.ok) throw new Error('Failed to upload file');
+      const newFile = await response.json();
 
-    // Reset form sau khi submit
+      // Add the new file from API response to the list
+      setFilteredDocuments((prevDocs) => [...prevDocs, newFile]);
+    } catch (error) {
+      alert('Error uploading file: ' + error.message);
+    }
+
+    // Reset form after submit
     setFormData({
       title: '',
       content: '',
@@ -54,7 +83,7 @@ const AddFiletButton = ({ setFilteredDocuments }) => {
       author: '',
       file: null,
     });
-    setShowForm(false); // Ẩn form sau khi submit
+    setShowForm(false);
   };
 
   const handleCancelFile = () => {
@@ -99,10 +128,9 @@ const AddFiletButton = ({ setFilteredDocuments }) => {
 
             {/* Content */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Content</label>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
                 name="content"
-                value={formData.content}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
                 required
@@ -112,14 +140,18 @@ const AddFiletButton = ({ setFilteredDocuments }) => {
             {/* Category */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Category</label>
-              <input
-                type="text"
+              <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
                 required
-              />
+              >
+                <option value="">Select a category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
             </div>
 
             {/* Author */}
@@ -128,7 +160,6 @@ const AddFiletButton = ({ setFilteredDocuments }) => {
               <input
                 type="text"
                 name="author"
-                value={formData.author}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
                 required
