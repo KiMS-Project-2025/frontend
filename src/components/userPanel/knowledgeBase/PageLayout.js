@@ -69,17 +69,6 @@ const PageLayout = () => {
         setFilteredDocuments={setFilteredDocuments}
         documentId={id}
       />
-
-      <div>
-        <h2>Files</h2>
-        <ul>
-          {files.map(file => (
-            <li key={file.id}>
-              <strong>{file.title}</strong> - {file.author} - {file.description}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 };

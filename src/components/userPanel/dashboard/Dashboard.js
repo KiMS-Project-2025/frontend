@@ -22,9 +22,11 @@ const Dashboard = () => {
           return;
         }
 
+        const starredMap = getStarredFromStorage();
+
         setRecentDocuments(data.map(doc => ({
           ...doc,
-          starred: false,
+          starred: !!starredMap[doc.id],
           shortDescription: doc.title,
           uploadDate: new Date(doc.modified_at).toLocaleDateString()
         })));
@@ -38,11 +40,29 @@ const Dashboard = () => {
 
   // Toggle the "starred" state of the document
   const handleStar = (docId) => {
-    setRecentDocuments((prevDocs) =>
-      prevDocs.map((doc) =>
+    setRecentDocuments((prevDocs) => {
+      const updatedDocs = prevDocs.map((doc) =>
         doc.id === docId ? { ...doc, starred: !doc.starred } : doc
-      )
-    );
+      );
+
+      const starredMap = {};
+      updatedDocs.forEach(doc => {
+        if (doc.starred) starredMap[doc.id] = true;
+      });
+
+      saveStarredToStorage(starredMap);
+
+      return updatedDocs;
+    });
+  };
+
+  const getStarredFromStorage = () => {
+    const stored = localStorage.getItem('starredDocs');
+    return stored ? JSON.parse(stored) : {};
+  };
+
+  const saveStarredToStorage = (starredMap) => {
+    localStorage.setItem('starredDocs', JSON.stringify(starredMap));
   };
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
@@ -90,8 +110,8 @@ const Dashboard = () => {
         />
 
         {/* Frequent Sites Component: Truyền các props vào FrequentSites */}
-        <FrequentSites 
-          documents={recentDocuments} 
+        <FrequentSites
+          documents={recentDocuments}
           handleStar={handleStar}
           onCardClick={handleCardClick}
         />

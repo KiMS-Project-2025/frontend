@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { API_URL } from '../../../constant';
 const CATEGORY_OPTIONS = [
@@ -109,86 +109,111 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
 
       {/* Hiển thị form khi showForm là true */}
       {showForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
-            <h2 className="text-2xl font-semibold mb-4">Add New Document</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <form onSubmit={handleSubmit} className="relative bg-white p-8 rounded-2xl shadow-xl w-full max-w-xl space-y-6">
+            <h2 className="text-3xl font-bold text-center text-gray-800">Add New File</h2>
 
             {/* Title */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Title</label>
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                Title
+              </label>
               <input
-                type="text"
+                id="title"
                 name="title"
+                type="text"
                 value={formData.title}
                 onChange={handleChange}
-                className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter title..."
                 required
               />
             </div>
 
             {/* Content */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+            <div>
+              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
               <textarea
+                id="content"
                 name="content"
+                rows="4"
+                value={formData.content}
                 onChange={handleChange}
-                className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Write a brief description..."
                 required
               />
             </div>
 
             {/* Category */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Category</label>
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
               <select
+                id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Select a category</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Author */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Author</label>
+            <div>
+              <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">
+                Author
+              </label>
               <input
-                type="text"
+                id="author"
                 name="author"
+                type="text"
                 onChange={handleChange}
-                className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Author name..."
                 required
               />
             </div>
 
             {/* File */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Upload File</label>
+            <div>
+              <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-1">
+                Upload PDF File
+              </label>
               <input
-                type="file"
+                id="file"
                 name="file"
+                type="file"
                 onChange={handleFileChange}
-                className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+                className="block w-full border border-gray-300 rounded-lg px-4 py-2 file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded-md file:bg-blue-600 file:text-white file:cursor-pointer"
                 accept="application/pdf"
               />
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-4">
-              <button type="submit" className="p-2 bg-blue-600 text-white rounded-lg">
-                Submit
-              </button>
+            <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
                 onClick={handleCancelFile}
-                className="p-2 bg-gray-600 text-white rounded-lg"
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
               >
                 Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                Submit
               </button>
             </div>
           </form>
