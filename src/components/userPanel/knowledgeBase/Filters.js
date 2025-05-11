@@ -41,7 +41,7 @@ const Filters = ({ handleSearch }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* Category Filter */}
       <div className="space-y-2">
         <label className="flex items-center text-sm font-medium text-gray-700">
@@ -51,7 +51,7 @@ const Filters = ({ handleSearch }) => {
         <select
           value={category}
           onChange={handleCategoryChange}
-          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          className="block w-full pl-3 pr-10 py-2 text-sm md:text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md bg-white"
         >
           <option value="all">All Categories</option>
           {loading ? (
@@ -75,7 +75,7 @@ const Filters = ({ handleSearch }) => {
         <select
           value={sortOrder}
           onChange={handleSortChange}
-          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          className="block w-full pl-3 pr-10 py-2 text-sm md:text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md bg-white"
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>

@@ -133,48 +133,48 @@ const Dashboard = () => {
         </div> */}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <FaFileAlt className="text-blue-600 text-xl" />
+              <div className="p-2 md:p-3 bg-blue-100 rounded-lg">
+                <FaFileAlt className="text-blue-600 text-lg md:text-xl" />
               </div>
-              <div className="ml-4">
+              <div className="ml-3 md:ml-4">
                 <p className="text-sm text-gray-500">Total Documents</p>
-                <p className="text-2xl font-semibold text-gray-800">{stats.totalDocuments}</p>
+                <p className="text-xl md:text-2xl font-semibold text-gray-800">{stats.totalDocuments}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <FaClock className="text-green-600 text-xl" />
+              <div className="p-2 md:p-3 bg-green-100 rounded-lg">
+                <FaClock className="text-green-600 text-lg md:text-xl" />
               </div>
-              <div className="ml-4">
+              <div className="ml-3 md:ml-4">
                 <p className="text-sm text-gray-500">Recent Views</p>
-                <p className="text-2xl font-semibold text-gray-800">{stats.recentViews}</p>
+                <p className="text-xl md:text-2xl font-semibold text-gray-800">{stats.recentViews}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <FaUsers className="text-purple-600 text-xl" />
+              <div className="p-2 md:p-3 bg-purple-100 rounded-lg">
+                <FaUsers className="text-purple-600 text-lg md:text-xl" />
               </div>
-              <div className="ml-4">
+              <div className="ml-3 md:ml-4">
                 <p className="text-sm text-gray-500">Team Members</p>
-                <p className="text-2xl font-semibold text-gray-800">{stats.teamMembers}</p>
+                <p className="text-xl md:text-2xl font-semibold text-gray-800">{stats.teamMembers}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <FaBookmark className="text-yellow-600 text-xl" />
+              <div className="p-2 md:p-3 bg-yellow-100 rounded-lg">
+                <FaBookmark className="text-yellow-600 text-lg md:text-xl" />
               </div>
-              <div className="ml-4">
+              <div className="ml-3 md:ml-4">
                 <p className="text-sm text-gray-500">Bookmarks</p>
-                <p className="text-2xl font-semibold text-gray-800">{stats.bookmarks}</p>
+                <p className="text-xl md:text-2xl font-semibold text-gray-800">{stats.bookmarks}</p>
               </div>
             </div>
           </div>
@@ -183,26 +183,26 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-800">Quick Actions</h3>
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800">Quick Actions</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
               onClick={() => navigate('/search')}
-              className="flex items-center justify-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center justify-center p-3 md:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
             >
               <FaSearch className="text-blue-600 mr-2" />
               <span>Search Documents</span>
             </button>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center justify-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center justify-center p-3 md:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
             >
               <FaPlus className="text-green-600 mr-2" />
               <span>Create New Site</span>
             </button>
             <button
               onClick={() => navigate('/bookmarks')}
-              className="flex items-center justify-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center justify-center p-3 md:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
             >
               <FaBookmark className="text-yellow-600 mr-2" />
               <span>View Bookmarks</span>
@@ -210,7 +210,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           <Sidebar
             recentDocuments={recentDocuments}
             handleStar={handleStar}

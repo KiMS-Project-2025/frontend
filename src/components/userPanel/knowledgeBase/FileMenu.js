@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaTrash, FaDownload, FaInfoCircle } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaDownload, FaInfoCircle, FaTag } from 'react-icons/fa';
 import { API_URL } from '../../../constant';
 import useClickOutside from '../../../hooks/useClickOutside';
 
@@ -70,79 +70,38 @@ const FileMenu = ({
 
   if (!isMenuVisible) return null;
 
+  const menuItems = [
+    { icon: <FaEdit className="w-4 h-4" />, text: "Edit Name", onClick: onEdit },
+    { icon: <FaEdit className="w-4 h-4" />, text: "Edit Description", onClick: onEditDescription },
+    { icon: <FaTag className="w-4 h-4" />, text: "Change Category", onClick: onEditCategory },
+    { icon: <FaDownload className="w-4 h-4" />, text: "Download", onClick: onDownload },
+    { icon: <FaTrash className="w-4 h-4" />, text: "Delete", onClick: onDelete, isDanger: true }
+  ];
+
   return (
     <>
       <div
         ref={menuRef}
-        className="file-menu absolute z-10 bg-white shadow-lg rounded-lg p-4"
+        className="fixed z-50 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
         style={{
-          top: menuPosition?.top || 0,
-          left: menuPosition?.left || 0,
-          minWidth: '200px'
+          top: menuPosition?.top,
+          left: menuPosition?.left,
         }}
       >
-        <ul className="space-y-2">
-          <li
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(docId);
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+        {menuItems.map((item, index) => (
+          <button
+            key={index}
+            onClick={item.onClick}
+            className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
+              item.isDanger 
+                ? 'text-red-600 hover:bg-red-50' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <FaEdit className="mr-3 text-gray-500" />
-            <span>Edit Name</span>
-          </li>
-          <li
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditDescription(docId);
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-          >
-            <FaEdit className="mr-3 text-gray-500" />
-            <span>Edit Description</span>
-          </li>
-          <li
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditCategory(docId);
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-          >
-            <FaEdit className="mr-3 text-gray-500" />
-            <span>Edit Category</span>
-          </li>
-          <li
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(docId);
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-          >
-            <FaTrash className="mr-3 text-gray-500" />
-            <span>Delete</span>
-          </li>
-          <li
-            onClick={(e) => {
-              e.stopPropagation();
-              onDownload(docId);
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-          >
-            <FaDownload className="mr-3 text-gray-500" />
-            <span>Download</span>
-          </li>
-          <li
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleInfo();
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-          >
-            <FaInfoCircle className="mr-3 text-gray-500" />
-            <span>Info</span>
-          </li>
-        </ul>
+            <span className="flex-shrink-0">{item.icon}</span>
+            <span className="flex-1">{item.text}</span>
+          </button>
+        ))}
       </div>
 
       {showInfo && (

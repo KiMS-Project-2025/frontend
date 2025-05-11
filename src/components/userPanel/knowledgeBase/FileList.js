@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { FaEllipsisV, FaFilePdf } from "react-icons/fa";
+import { FaEllipsisV, FaFilePdf, FaEdit, FaTag, FaDownload, FaTrash } from "react-icons/fa";
 import FileMenu from "./FileMenu"; // Import component menu ba chấm
 import { API_URL } from "../../../constant";
 import ModalCategory from "./modalCategory";
@@ -122,9 +122,19 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const toggleMenu = (e, id) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
+    const menuWidth = 192; // Width of the menu (w-48 = 12rem = 192px)
+    const windowWidth = window.innerWidth;
+    
+    // Check if menu would overflow on the right
+    const wouldOverflowRight = rect.left + menuWidth > windowWidth;
+    
     setMenuPosition({
       top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX
+      // If would overflow right, position from right edge of button
+      // Otherwise position from left edge of button
+      left: wouldOverflowRight 
+        ? rect.right + window.scrollX - menuWidth 
+        : rect.left + window.scrollX
     });
     setActiveMenu(activeMenu === id ? null : id);
   };
@@ -348,16 +358,27 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
                   {doc.category_name}
                 </span>
               )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMenu(e, doc.id);
-                  // setFileMenuVisible(!fileMenuVisible);
-                }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition"
-              >
-                <FaEllipsisV />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMenu(e, doc.id);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition hover:bg-gray-100"
+                >
+                  <FaEllipsisV />
+                </button>
+                <FileMenu
+                  isMenuVisible={activeMenu === doc.id}
+                  menuPosition={menuPosition}
+                  onEdit={() => handleEditName(doc.id)}
+                  onEditDescription={() => handleEditDescription(doc.id)}
+                  onEditCategory={() => handleEditCategory(doc.id)}
+                  onDelete={() => handleDeleteFile(doc.id)}
+                  onDownload={() => handleDownloadFile(doc.id)}
+                  onClose={handleClickOutside}
+                />
+              </div>
             </div>
           </div>
 
@@ -404,20 +425,6 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
                 "Date not available"}
             </div>
           </div>
-
-          {/* Render Menu for actions */}
-          <FileMenu
-            docId={doc.id}
-            isMenuVisible={activeMenu === doc.id}
-            menuPosition={menuPosition}
-            fileData={doc}
-            onEdit={handleEditName}
-            onEditDescription={handleEditDescription}
-            onEditCategory={handleEditCategory}
-            onDelete={handleDeleteFile}
-            onDownload={handleDownloadFile}
-            onClose={handleClickOutside}
-          />
         </div>
       ))}
       <ModalCategory

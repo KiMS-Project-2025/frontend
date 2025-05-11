@@ -7,6 +7,8 @@ import {
   FaSort,
   FaTimes,
   FaArrowLeft,
+  FaCalendarAlt,
+  FaTag,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist";
@@ -348,7 +350,50 @@ const SearchPage = () => {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm bg-custom-blue">
         <div className="container max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Mobile Layout */}
+          <div className="flex flex-col sm:hidden space-y-4">
+            {/* Top row: Back button and Filter */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => navigate("/")}
+                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <FaArrowLeft className="mr-2" />
+                Back to Dashboard
+              </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <FaFilter className="mr-2" />
+                Filters
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Search files, documents, or keywords..."
+                className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden sm:flex items-center gap-3">
             {/* Back Button */}
             <button
               onClick={() => navigate("/")}
@@ -392,15 +437,17 @@ const SearchPage = () => {
           {/* Filters Panel */}
           {showFilters && (
             <div className="bg-gray-50 rounded-lg p-4 mt-4 border border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Category Filter */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <FaTag className="mr-2 text-gray-400" />
                     Category
                   </label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full pl-3 pr-10 py-2 text-sm md:text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md bg-white"
                   >
                     <option value="All Categories">All Categories</option>
                     {categories.map((option) => (
@@ -410,14 +457,17 @@ const SearchPage = () => {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
+
+                {/* Sort Order */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <FaCalendarAlt className="mr-2 text-gray-400" />
                     Sort By
                   </label>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full pl-3 pr-10 py-2 text-sm md:text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md bg-white"
                   >
                     <option value="Newest First">Newest First</option>
                     <option value="Oldest First">Oldest First</option>
@@ -453,7 +503,7 @@ const SearchPage = () => {
             )}
 
             {/* Results */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {searchResults.map((doc) => (
                 <div key={doc.id} className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden">
                   {/* Header with PDF icon and title */}

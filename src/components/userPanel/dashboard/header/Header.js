@@ -58,14 +58,14 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 bg-custom-blue shadow-md">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex flex-col md:flex-row items-center justify-between py-4 md:h-16">
           {/* Left: Logo and Dashboard title */}
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-gray-800">KMS Dashboard</h1>
+          <div className="flex items-center mb-4 md:mb-0">
+            <h1 className="text-lg md:text-xl font-bold text-gray-800">KMS Dashboard</h1>
           </div>
 
           {/* Center: Search bar */}
-          <div className="flex-1 max-w-2xl mx-8 relative" ref={dropdownRef}>
+          <div className="w-full md:flex-1 md:max-w-2xl md:mx-8 relative" ref={dropdownRef}>
             <form onSubmit={handleSearch} className="relative">
               <div className="relative">
                 <input
@@ -73,10 +73,10 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search documents, people, or topics..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 text-sm md:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   onFocus={() => searchQuery && setShowDropdown(true)}
                 />
-                <FaSearch className="absolute left-3 top-3 text-gray-400 cursor-pointer" onClick={handleSearch} />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onClick={handleSearch} />
               </div>
             </form>
             {/* Dropdown results */}
@@ -94,9 +94,9 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
                         setShowDropdown(false);
                       }}
                     >
-                      <FaFileAlt className="text-blue-500 mr-3" />
+                      <FaFileAlt className="text-blue-500 mr-3 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-800 truncate">{result.title || 'Untitled'}</div>
+                        <div className="font-medium text-gray-800 truncate text-sm md:text-base">{result.title || 'Untitled'}</div>
                         <div className="text-xs text-gray-500 truncate">{result.description || 'No description'}</div>
                       </div>
                     </div>
@@ -109,12 +109,12 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
           </div>
 
           {/* Right: User actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <button
               onClick={() => navigate('/notifications')}
               className="p-2 text-gray-600 hover:text-blue-600 relative"
             >
-              <FaBell className="text-xl" />
+              <FaBell className="text-lg md:text-xl" />
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             
@@ -122,7 +122,7 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
               onClick={() => navigate('/settings')}
               className="p-2 text-gray-600 hover:text-blue-600"
             >
-              <FaCog className="text-xl" />
+              <FaCog className="text-lg md:text-xl" />
             </button>
 
             <div className="relative">
@@ -130,7 +130,7 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
                 onClick={toggleDropdown}
                 className="flex items-center space-x-2 focus:outline-none"
               >
-                <FaUserCircle className="text-2xl text-gray-600 hover:text-blue-600" />
+                <FaUserCircle className="text-xl md:text-2xl text-gray-600 hover:text-blue-600" />
               </button>
               
               {dropdownOpen && <DropdownMenu />}

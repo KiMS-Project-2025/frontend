@@ -142,13 +142,23 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
         <FaPlus /> Add a New File
       </button>
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-all">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-all p-4">
           <form
             onSubmit={handleSubmit}
-            className="relative bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xl space-y-6 animate-fadeIn max-h-screen overflow-y-auto"
+            className="relative bg-white p-4 sm:p-8 rounded-2xl shadow-2xl w-full max-w-xl space-y-4 sm:space-y-6 animate-fadeIn max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Add New File</h2>
-            <p className="text-gray-500 mb-4 text-center">Fill in all fields and upload a PDF file to add a new document to this knowledge base.</p>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Add New File</h2>
+              <button
+                type="button"
+                onClick={handleCancelFile}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm sm:text-base text-gray-500 mb-4">Fill in all fields and upload a PDF file to add a new document to this knowledge base.</p>
+            
             {/* Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -158,12 +168,13 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
                 type="text"
                 value={formData.title}
                 onChange={handleChange}
-                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter title..."
                 required
                 maxLength={100}
               />
             </div>
+
             {/* Content */}
             <div>
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -173,12 +184,13 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
                 rows="4"
                 value={formData.content}
                 onChange={handleChange}
-                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Write a brief description..."
                 required
                 maxLength={500}
               />
             </div>
+
             {/* Category */}
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -187,7 +199,7 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Select a category</option>
@@ -197,6 +209,7 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
                 <option value="other">+</option>
               </select>
             </div>
+
             {/* Author */}
             <div>
               <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">Author</label>
@@ -206,12 +219,13 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
                 type="text"
                 value={formData.author}
                 onChange={handleChange}
-                className="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Author name..."
                 required
                 maxLength={100}
               />
             </div>
+
             {/* File */}
             <div>
               <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-1">Upload PDF File</label>
@@ -220,25 +234,27 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
                 name="file"
                 type="file"
                 onChange={handleFileChange}
-                className="block w-full border border-gray-300 rounded-lg px-4 py-2 file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded-md file:bg-blue-600 file:text-white file:cursor-pointer"
+                className="block w-full text-sm sm:text-base border border-gray-300 rounded-lg px-3 sm:px-4 py-2 file:mr-4 file:py-2 file:px-4 file:border-0 file:rounded-md file:bg-blue-600 file:text-white file:cursor-pointer file:text-sm"
                 accept="application/pdf"
                 required
               />
             </div>
+
             {/* Error */}
             {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+
             {/* Buttons */}
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
               <button
                 type="button"
                 onClick={handleCancelFile}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className="w-full sm:w-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow text-sm sm:text-base"
               >
                 Submit
               </button>

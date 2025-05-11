@@ -113,7 +113,7 @@ const FileViewerPage = () => {
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 gap-4">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(-1)}
@@ -123,25 +123,27 @@ const FileViewerPage = () => {
               </button>
               <div className="flex items-center gap-2">
                 <FaFilePdf className="text-red-500 text-xl" />
-                <h1 className="text-lg font-semibold text-gray-900">
+                <h1 className="text-lg font-semibold text-gray-900 truncate max-w-[200px] sm:max-w-none">
                   {fileInfo?.title || 'Loading...'}
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={handleOpenInBrowser}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
               >
                 <FaExternalLinkAlt className="w-4 h-4" />
-                Open in Browser
+                <span className="sm:hidden">Open</span>
+                <span className="hidden sm:inline">Open in Browser</span>
               </button>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
               >
                 <FaDownload className="w-4 h-4" />
-                Download
+                <span className="sm:hidden">Download</span>
+                <span className="hidden sm:inline">Download</span>
               </button>
             </div>
           </div>
@@ -149,14 +151,14 @@ const FileViewerPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="bg-white rounded-lg shadow-sm">
           {/* PDF Controls */}
-          <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+          <div className="border-b border-gray-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <button
                 onClick={handleZoomOut}
-                className="p-2 text-gray-600 hover:text-gray-900"
+                className="p-2 text-gray-600 hover:text-gray-900 bg-gray-50 rounded-lg"
                 disabled={zoom <= 0.5}
               >
                 -
@@ -164,7 +166,7 @@ const FileViewerPage = () => {
               <span className="text-sm text-gray-600">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={handleZoomIn}
-                className="p-2 text-gray-600 hover:text-gray-900"
+                className="p-2 text-gray-600 hover:text-gray-900 bg-gray-50 rounded-lg"
                 disabled={zoom >= 3}
               >
                 +
@@ -196,7 +198,7 @@ const FileViewerPage = () => {
                     <img
                       src={page}
                       alt={`Page ${index + 1}`}
-                      className="shadow-lg rounded"
+                      className="shadow-lg rounded max-w-full h-auto"
                       onLoad={() => {
                         if (index === 0) setCurrentPage(1);
                       }}
