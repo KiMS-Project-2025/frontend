@@ -35,6 +35,9 @@ const SearchPage = () => {
   const [initialCategory, setInitialCategory] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [viewingFile, setViewingFile] = useState(null);
+  const [fileContent, setFileContent] = useState([]);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
 
   // Fetch categories from API
   useEffect(() => {
