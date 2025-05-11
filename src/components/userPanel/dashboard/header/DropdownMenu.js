@@ -1,43 +1,58 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaSignOutAlt, FaUserCircle, FaCog } from 'react-icons/fa';
+import { FaUser, FaCog, FaSignOutAlt, FaQuestionCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const DropdownMenu = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Add logout logic here
+    navigate('/login');
+  };
+
   return (
-    <div className="absolute top-12 right-0 w-6128 bg-white shadow-lg rounded-lg py-4 px-2">
-      {/* Header */}
-      <div className="flex items-center gap-4 px-4">
-        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
-          TP 
-        </div>
-        <div>
-          <div className="text-lg font-semibold text-gray-900">THAI THANH PHAT</div>
-          <div className="text-sm text-gray-500">ITITIU21274@student.hcmiu.edu.vn</div>
-        </div>
+    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200">
+      {/* User Info */}
+      <div className="px-4 py-2 border-b border-gray-100">
+        <p className="text-sm font-medium text-gray-800">John Doe</p>
+        <p className="text-xs text-gray-500">john.doe@example.com</p>
       </div>
 
-      <hr className="my-4 border-gray-300" />
-
       {/* Menu Items */}
-      <div className="space-y-2">
-        <Link
-          to="/user/profile"
-          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+      <div className="py-1">
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
-          <FaUserCircle className="text-gray-600" /> View account
-        </Link>
-        <Link
-          to="/user/setting"
-          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+          <FaUser className="mr-3 text-gray-400" />
+          Profile
+        </button>
+
+        <button
+          onClick={() => navigate('/settings')}
+          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
-          <FaCog className="text-gray-600" /> Settings
-        </Link>
-        <Link
-          to="/user/logout"
-          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+          <FaCog className="mr-3 text-gray-400" />
+          Settings
+        </button>
+
+        <button
+          onClick={() => navigate('/help')}
+          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
-          <FaSignOutAlt className="text-gray-600" /> Sign out
-        </Link>
+          <FaQuestionCircle className="mr-3 text-gray-400" />
+          Help & Support
+        </button>
+
+        <div className="border-t border-gray-100 my-1"></div>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+        >
+          <FaSignOutAlt className="mr-3" />
+          Sign out
+        </button>
       </div>
     </div>
   );

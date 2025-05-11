@@ -1,28 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { FaSearch, FaFilePdf, FaEllipsisV } from 'react-icons/fa';
-import * as pdfjsLib from 'pdfjs-dist';
-import { API_URL } from '../../../constant';
-import FileMenu from '../knowledgeBase/FileMenu';
-import FileView from '../knowledgeBase/FileView';
-import ModalCategory from '../knowledgeBase/modalCategory';
+import React, { useState, useEffect } from "react";
+import {
+  FaSearch,
+  FaFilePdf,
+  FaEllipsisV,
+  FaFilter,
+  FaSort,
+  FaTimes,
+  FaArrowLeft,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import * as pdfjsLib from "pdfjs-dist";
+import { API_URL } from "../../../constant";
+import FileMenu from "../knowledgeBase/FileMenu";
+import FileView from "../knowledgeBase/FileView";
+import ModalCategory from "../knowledgeBase/modalCategory";
+import letterColors from '../../../data/colorData';
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-const CATEGORY_OPTIONS = [
-  { id: '1', name: 'IT' },
-  { id: '2', name: 'BA' },
-  { id: '3', name: 'EE' },
-  { id: '4', name: 'EN' },
-];
-
 const SearchPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [sortOrder, setSortOrder] = useState('Newest First');
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [sortOrder, setSortOrder] = useState("Newest First");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
-  const [menuPosition, setMenuPosition] = useState(null);
+  const [menuPositions, setMenuPositions] = useState({});
   const [viewingFile, setViewingFile] = useState(null);
   const [fileContent, setFileContent] = useState([]);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
@@ -30,7 +34,25 @@ const SearchPage = () => {
   const [loadingThumbnails, setLoadingThumbnails] = useState({});
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingDocId, setEditingDocId] = useState(null);
-  const [initialCategory, setInitialCategory] = useState('');
+  const [initialCategory, setInitialCategory] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/category`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Load thumbnails when search results change
   useEffect(() => {
@@ -47,8 +69,8 @@ const SearchPage = () => {
         const viewport = page.getViewport({ scale: 2.0 }); // Increased scale for better quality
 
         // Create canvas
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
         // Set canvas dimensions
         canvas.width = viewport.width;
@@ -58,16 +80,16 @@ const SearchPage = () => {
           canvasContext: context,
           viewport: viewport,
           transform: [1, 0, 0, 1, 0, 0], // No translation, show from top
-          intent: 'display'
+          intent: "display",
         }).promise;
 
         // Convert canvas to image URL with better quality
-        const imgUrl = canvas.toDataURL('image/jpeg', 1.0);
-        setThumbnails(prev => ({ ...prev, [id]: imgUrl }));
+        const imgUrl = canvas.toDataURL("image/jpeg", 1.0);
+        setThumbnails((prev) => ({ ...prev, [id]: imgUrl }));
       } catch (error) {
-        console.error('Error generating thumbnail:', error);
+        console.error("Error generating thumbnail:", error);
       } finally {
-        setLoadingThumbnails(prev => ({ ...prev, [id]: false }));
+        setLoadingThumbnails((prev) => ({ ...prev, [id]: false }));
       }
     };
 
@@ -75,15 +97,15 @@ const SearchPage = () => {
       for (const doc of searchResults) {
         if (!thumbnails[doc.id] && !loadingThumbnails[doc.id]) {
           try {
-            setLoadingThumbnails(prev => ({ ...prev, [doc.id]: true }));
+            setLoadingThumbnails((prev) => ({ ...prev, [doc.id]: true }));
             const response = await fetch(`${API_URL}/file?id=${doc.id}`);
-            if (!response.ok) throw new Error('Failed to load thumbnail');
+            if (!response.ok) throw new Error("Failed to load thumbnail");
             const blob = await response.blob();
             await generateThumbnail(blob, doc.id);
           } catch (error) {
-            console.error('Error loading thumbnail:', error);
+            console.error("Error loading thumbnail:", error);
           } finally {
-            setLoadingThumbnails(prev => ({ ...prev, [doc.id]: false }));
+            setLoadingThumbnails((prev) => ({ ...prev, [doc.id]: false }));
           }
         }
       }
@@ -93,8 +115,8 @@ const SearchPage = () => {
 
     // Cleanup function to revoke object URLs
     return () => {
-      Object.values(thumbnails).forEach(url => {
-        if (url.startsWith('blob:')) {
+      Object.values(thumbnails).forEach((url) => {
+        if (url.startsWith("blob:")) {
           URL.revokeObjectURL(url);
         }
       });
@@ -105,150 +127,182 @@ const SearchPage = () => {
     if (!searchQuery) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) throw new Error('Search failed');
+      const response = await fetch(
+        `${API_URL}/search?q=${encodeURIComponent(searchQuery)}`
+      );
+      if (!response.ok) throw new Error("Search failed");
       const data = await response.json();
       // Lọc kết quả không phân biệt hoa thường ở frontend
       const lowerQuery = searchQuery.toLowerCase();
-      const filtered = (Array.isArray(data) ? data : [data]).filter(doc =>
-        (doc.title || '').toLowerCase().includes(lowerQuery) ||
-        (doc.description || '').toLowerCase().includes(lowerQuery)
+      const filtered = (Array.isArray(data) ? data : [data]).filter(
+        (doc) =>
+          (doc.title || "").toLowerCase().includes(lowerQuery) ||
+          (doc.description || "").toLowerCase().includes(lowerQuery)
       );
       setSearchResults(filtered);
     } catch (error) {
       setSearchResults([]);
-      alert('Error searching: ' + error.message);
+      alert("Error searching: " + error.message);
     }
     setLoading(false);
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
 
   const toggleMenu = (e, id) => {
+    e.stopPropagation();
     const rect = e.target.getBoundingClientRect();
-    setMenuPosition({
-      top: rect.bottom,
-      left: rect.left,
-    });
+    
+    // Update positions for specific document
+    setMenuPositions(prev => ({
+      ...prev,
+      [id]: {
+        top: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+      }
+    }));
+    
     setActiveMenu(activeMenu === id ? null : id);
+  };
+
+  // Add click outside handler to close menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeMenu && !event.target.closest('.file-menu')) {
+        setActiveMenu(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [activeMenu]);
+
+  const resetPageState = () => {
+    setSearchResults([]);
+    setThumbnails({});
+    setLoadingThumbnails({});
+    setActiveMenu(null);
+    setMenuPositions({});
+    setViewingFile(null);
+    setFileContent([]);
+    setIsLoadingFile(false);
   };
 
   // File actions handlers
   const handleEditName = async (id) => {
-    const newName = prompt('Enter new name:');
+    const newName = prompt("Enter new name:");
     if (newName) {
       try {
         const formData = new URLSearchParams();
-        formData.append('id', id);
-        formData.append('title', newName);
+        formData.append("id", id);
+        formData.append("title", newName);
 
         const response = await fetch(`${API_URL}/file`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          method: "PUT",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString(),
         });
-        if (!response.ok) throw new Error('Failed to update name');
-        setSearchResults((prev) =>
-          prev.map((doc) => doc.id === id ? { ...doc, title: newName } : doc)
-        );
+        if (!response.ok) throw new Error("Failed to update name");
+        
+        // Reload the entire page
+        window.location.reload();
       } catch (error) {
-        alert('Error updating name: ' + error.message);
+        alert("Error updating name: " + error.message);
       }
     }
   };
 
   const handleEditDescription = async (id) => {
-    const newDescription = prompt('Enter new description:');
+    const newDescription = prompt("Enter new description:");
     if (newDescription) {
       try {
         const formData = new URLSearchParams();
-        formData.append('id', id);
-        formData.append('description', newDescription);
+        formData.append("id", id);
+        formData.append("description", newDescription);
 
         const response = await fetch(`${API_URL}/file`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          method: "PUT",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString(),
         });
-        if (!response.ok) throw new Error('Failed to update description');
-        setSearchResults((prev) =>
-          prev.map((doc) => doc.id === id ? { ...doc, description: newDescription } : doc)
-        );
+        if (!response.ok) throw new Error("Failed to update description");
+        
+        // Reload the entire page
+        window.location.reload();
       } catch (error) {
-        alert('Error updating description: ' + error.message);
+        alert("Error updating description: " + error.message);
       }
     }
   };
 
   const handleEditCategory = (id) => {
-    const doc = searchResults.find(d => d.id === id);
+    const doc = searchResults.find((d) => d.id === id);
     setEditingDocId(id);
-    setInitialCategory(doc?.cid || '');
+    setInitialCategory(doc?.cid || "");
     setShowCategoryModal(true);
   };
 
   const handleSaveCategory = async (newCategory) => {
     try {
       const formData = new URLSearchParams();
-      formData.append('id', editingDocId);
-      formData.append('cid', newCategory);
+      formData.append("id", editingDocId);
+      formData.append("cid", newCategory);
 
       const response = await fetch(`${API_URL}/file`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        method: "PUT",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString(),
       });
 
-      if (!response.ok) throw new Error('Failed to update category');
+      if (!response.ok) throw new Error("Failed to update category");
 
-      setSearchResults(prev =>
-        prev.map(doc =>
-          doc.id === editingDocId ? { ...doc, cid: newCategory, category: getNameById(newCategory) } : doc
-        )
-      );
-      setShowCategoryModal(false);
+      // Reload the entire page
+      window.location.reload();
     } catch (error) {
-      alert('Error updating category: ' + error.message);
+      alert("Error updating category: " + error.message);
     }
   };
 
   const handleDeleteFile = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this file?')) return;
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
     try {
       const formData = new URLSearchParams();
-      formData.append('id', id);
+      formData.append("id", id);
 
       const response = await fetch(`${API_URL}/file`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        method: "DELETE",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString(),
       });
-      if (!response.ok) throw new Error('Failed to delete file');
+      if (!response.ok) throw new Error("Failed to delete file");
       setSearchResults((prev) => prev.filter((doc) => doc.id !== id));
     } catch (error) {
-      alert('Error deleting file: ' + error.message);
+      alert("Error deleting file: " + error.message);
     }
   };
 
   const handleDownloadFile = async (id) => {
     try {
       const response = await fetch(`${API_URL}/file?id=${id}&download=1`);
-      if (!response.ok) throw new Error('Failed to download file');
+      if (!response.ok) throw new Error("Failed to download file");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = '';
+      a.download = "";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch (error) {
-      alert('Error downloading file: ' + error.message);
+      alert("Error downloading file: " + error.message);
     }
   };
 
@@ -257,7 +311,7 @@ const SearchPage = () => {
     setViewingFile(file);
     try {
       const response = await fetch(`${API_URL}/file?id=${file.id}`);
-      if (!response.ok) throw new Error('Failed to load file');
+      if (!response.ok) throw new Error("Failed to load file");
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const pdfData = new Uint8Array(arrayBuffer);
@@ -267,21 +321,21 @@ const SearchPage = () => {
       for (let i = 1; i <= numPages; i++) {
         const page = await pdfDoc.getPage(i);
         const viewport = page.getViewport({ scale: 2.0 }); // Increased scale for better quality
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext("2d");
         await page.render({
           canvasContext: context,
           viewport,
-          background: 'white'
+          background: "white",
         }).promise;
-        const imgUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const imgUrl = canvas.toDataURL("image/jpeg", 0.95);
         pages.push(imgUrl);
       }
       setFileContent(pages);
     } catch (error) {
-      alert('Error loading file viewer: ' + error.message);
+      alert("Error loading file viewer: " + error.message);
     }
   };
 
@@ -289,183 +343,224 @@ const SearchPage = () => {
     setViewingFile(null);
     setFileContent([]);
     // Clean up any object URLs
-    fileContent.forEach(url => URL.revokeObjectURL(url));
+    fileContent.forEach((url) => URL.revokeObjectURL(url));
   };
 
   const getNameById = (id) => {
-    const category = CATEGORY_OPTIONS.find(item => item.id === id);
-    return category ? category.name : null;
+    const category = categories.find((item) => item.id === id);
+    return category ? category.name : '';
+  };
+
+  const getBorderColor = (initial) => {
+    return letterColors[initial] || 'border-gray-500';
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-custom-blue shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between w-full">
-            <div className="text-left">
-              <h1 className="text-2xl font-semibold text-gray-800">Search Page</h1>
-            </div>
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm bg-custom-blue">
+        <div className="container max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <FaArrowLeft className="mr-2" />
+              Back to Dashboard
+            </button>
 
             {/* Search Bar */}
-            <div className="flex-1 w-full md:w-auto">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Search files..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            <div className="relative flex-1 min-w-[200px]">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Search files, documents, or keywords..."
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <FaFilter className="mr-2" />
+              Filters
+            </button>
+          </div>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="bg-gray-50 rounded-lg p-4 mt-4 border border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="All Categories">All Categories</option>
+                    {categories.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Newest First">Newest First</option>
+                    <option value="Oldest First">Oldest First</option>
+                  </select>
+                </div>
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="flex gap-4">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="All Categories">All Categories</option>
-                {CATEGORY_OPTIONS.map(option => (
-                  <option key={option.id} value={option.id}>{option.name}</option>
-                ))}
-              </select>
-
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Newest First">Newest First</option>
-                <option value="Oldest First">Oldest First</option>
-              </select>
-
-              <button
-                onClick={handleSearch}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Search
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Body */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Main Content */}
+      <div className="container max-w-7xl mx-auto px-4 py-8">
         {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Searching...</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p className="mt-4 text-gray-600">Searching through documents...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {searchResults.map((doc) => (
-              <div
-                key={doc.id}
-                onClick={() => handleOpenFileView(doc)}
-                className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition"
-              >
-                {/* Header with PDF icon and title */}
-                <div className="p-3 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <FaFilePdf className="text-red-500 text-lg" />
-                    <div>
-                      <h3 className="ml-2 font-medium text-gray-800">{doc.title || "Untitled Document"}</h3>
-                      {doc.documentName && doc.fileName && (
-                        <div className="ml-2 text-xs text-gray-400">
-                          {doc.documentName} &gt; {doc.fileName}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Category tag */}
-                    {doc.category && (
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold text-white w-fit ${doc.category === 'IT' ? 'bg-blue-500' :
-                          doc.category === 'BA' ? 'bg-green-500' :
-                            doc.category === 'EE' ? 'bg-yellow-500 text-gray-800' :
-                              doc.category === 'EN' ? 'bg-indigo-500' :
-                                'bg-gray-400'
-                          }`}
-                      >
-                        {doc.category}
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleMenu(e, doc.id);
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <FaEllipsisV />
-                    </button>
-                  </div>
-                </div>
+          <div className="space-y-6">
+            {/* Summary */}
+            {searchResults.length > 0 && (
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>
+                  {searchResults.length} result
+                  {searchResults.length !== 1 && "s"} found
+                </span>
+                <span className="flex items-center">
+                  <FaSort className="mr-1" /> Sorted by{" "}
+                  {sortOrder.toLowerCase()}
+                </span>
+              </div>
+            )}
 
-                {/* Thumbnail Section */}
-                <div className="h-48 bg-gray-50 flex items-center justify-center border-t border-b border-gray-100">
-                  {loadingThumbnails[doc.id] ? (
-                    <div className="flex flex-col items-center justify-center text-gray-400">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-2"></div>
-                      <span className="text-xs">Loading preview...</span>
+            {/* Results */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {searchResults.map((doc) => (
+                <div key={doc.id} className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden">
+                  {/* Header with PDF icon and title */}
+                  <div className="p-4 flex justify-between items-center border-b border-gray-100">
+                    <div
+                      className="flex items-center flex-1 min-w-0 cursor-pointer"
+                      onClick={() => handleOpenFileView(doc)}
+                    >
+                      <FaFilePdf className="text-red-500 text-xl" />
+                      <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[180px]">{doc.title || "Untitled Document"}</h3>
                     </div>
-                  ) : thumbnails[doc.id] ? (
-                    <div className="w-full h-full flex items-center justify-center bg-white">
+                    <div className="flex items-center gap-2 ml-2">
+                      {/* Category tag */}
+                      {doc.category_name && (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${getBorderColor(doc.category_name[0])} border-l-4`}
+                        >
+                          {doc.category_name}
+                        </span>
+                      )}
+                      <button
+                        onClick={(e) => toggleMenu(e, doc.id)}
+                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition"
+                      >
+                        <FaEllipsisV />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* PDF thumbnail preview */}
+                  <div className="h-fix bg-gray-50 flex items-center justify-center cursor-pointer" onClick={() => handleOpenFileView(doc)}>
+                    {loadingThumbnails[doc.id] ? (
+                      <div className="flex flex-col items-center justify-center text-gray-400">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-2"></div>
+                        <span className="text-xs text-gray-400">Generating preview...</span>
+                      </div>
+                    ) : thumbnails[doc.id] ? (
                       <img
                         src={thumbnails[doc.id]}
-                        alt="Document preview"
-                        className="max-h-full max-w-full object-contain"
-                        style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                        alt="PDF Thumbnail"
+                        className="w-full h-32 object-cover rounded-lg"
+                        style={{ objectPosition: 'top' }}
                       />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-gray-400">
-                      <FaFilePdf className="text-gray-300 text-5xl mb-2" />
-                      <span className="text-xs">No preview available</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Document info */}
-                <div className="p-4">
-                  <p className="text-sm text-gray-700 font-medium mb-1">
-                    {doc.description || "No description available"}
-                  </p>
-                  <div className="text-xs text-gray-400">
-                    Modified at: {new Date(doc.modified_at).toLocaleString()}
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-gray-400">
+                        <FaFilePdf className="text-gray-300 text-5xl mb-2" />
+                        <span className="text-xs text-gray-400">No preview available</span>
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* File Menu */}
-                <FileMenu
-                  docId={doc.id}
-                  isMenuVisible={activeMenu === doc.id}
-                  menuPosition={menuPosition}
-                  onEdit={handleEditName}
-                  onEditDescription={handleEditDescription}
-                  onEditCategory={() => handleEditCategory(doc.id)}
-                  onDelete={handleDeleteFile}
-                  onDownload={handleDownloadFile}
-                />
-              </div>
-            ))}
+                  {/* Document description and upload date */}
+                  <div className="p-4 cursor-pointer" onClick={() => handleOpenFileView(doc)}>
+                    <p className="text-sm text-gray-700 font-medium mb-1">
+                      {doc.shortDescription || doc.description || "Untitled Document"}
+                    </p>
+                    <div className="text-xs text-gray-400">
+                      Uploaded: {new Date(doc.modified_at).toLocaleString() || "Date not available"}
+                    </div>
+                  </div>
+
+                  {/* File Menu */}
+                  <FileMenu
+                    key={`menu-${doc.id}`}
+                    docId={doc.id}
+                    isMenuVisible={activeMenu === doc.id}
+                    menuPosition={menuPositions[doc.id]}
+                    fileData={doc}
+                    onEdit={handleEditName}
+                    onEditDescription={handleEditDescription}
+                    onEditCategory={handleEditCategory}
+                    onDelete={handleDeleteFile}
+                    onDownload={handleDownloadFile}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Empty State */}
             {searchResults.length === 0 && !loading && (
-              <div className="col-span-full text-center py-8 text-gray-500">
-                No results found
+              <div className="text-center py-16">
+                <div className="text-5xl text-gray-300 mb-2">📄</div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  No results found
+                </h3>
+                <p className="text-gray-500">
+                  Try changing your filters or search term.
+                </p>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* File Viewer Modal */}
+      {/* Modals and Menus */}
       {viewingFile && (
         <FileView
           selectedFile={viewingFile}
@@ -484,4 +579,4 @@ const SearchPage = () => {
   );
 };
 
-export default SearchPage; 
+export default SearchPage;

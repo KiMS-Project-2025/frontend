@@ -1,13 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaDownload, FaInfoCircle } from 'react-icons/fa';
 import { API_URL } from '../../../constant';
-
-const CATEGORY_OPTIONS = [
-  { id: '1', name: 'IT' },
-  { id: '2', name: 'BA' },
-  { id: '3', name: 'EE' },
-  { id: '4', name: 'EN' },
-];
 
 const FileMenu = ({
   docId,
@@ -21,6 +14,22 @@ const FileMenu = ({
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [infoData, setInfoData] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/category`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const toggleInfo = async () => {
     if (!showInfo) {
@@ -38,81 +47,85 @@ const FileMenu = ({
   };
 
   const getCategoryName = (categoryId) => {
-    const category = CATEGORY_OPTIONS.find(opt => opt.id === categoryId);
+    const category = categories.find(opt => opt.id === categoryId);
     return category ? category.name : categoryId;
   };
 
+  if (!isMenuVisible || !menuPosition) return null;
+
   return (
     <>
-      {isMenuVisible && (
-        <div
-          className="file-menu absolute z-10 bg-white shadow-lg rounded-lg p-4"
-          style={{ top: menuPosition.top, left: menuPosition.left }}
-        >
-          <ul className="space-y-2">
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(docId);
-              }}
-              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              <FaEdit className="mr-3 text-gray-500" />
-              <span>Edit Name</span>
-            </li>
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditDescription(docId);
-              }}
-              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              <FaEdit className="mr-3 text-gray-500" />
-              <span>Edit Description</span>
-            </li>
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditCategory(docId); 
-              }}
-              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              <FaEdit className="mr-3 text-gray-500" />
-              <span>Edit Category</span>
-            </li>
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(docId);
-              }}
-              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              <FaTrash className="mr-3 text-gray-500" />
-              <span>Delete</span>
-            </li>
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                onDownload(docId);
-              }}
-              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              <FaDownload className="mr-3 text-gray-500" />
-              <span>Download</span>
-            </li>
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleInfo();
-              }}
-              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              <FaInfoCircle className="mr-3 text-gray-500" />
-              <span>Info</span>
-            </li>
-          </ul>
-        </div>
-      )}
+      <div
+        className="file-menu absolute z-10 bg-white shadow-lg rounded-lg p-4"
+        style={{
+          top: menuPosition.top,
+          left: menuPosition.left,
+          minWidth: '200px'
+        }}
+      >
+        <ul className="space-y-2">
+          <li
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(docId);
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          >
+            <FaEdit className="mr-3 text-gray-500" />
+            <span>Edit Name</span>
+          </li>
+          <li
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditDescription(docId);
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          >
+            <FaEdit className="mr-3 text-gray-500" />
+            <span>Edit Description</span>
+          </li>
+          <li
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditCategory(docId);
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          >
+            <FaEdit className="mr-3 text-gray-500" />
+            <span>Edit Category</span>
+          </li>
+          <li
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(docId);
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          >
+            <FaTrash className="mr-3 text-gray-500" />
+            <span>Delete</span>
+          </li>
+          <li
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload(docId);
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          >
+            <FaDownload className="mr-3 text-gray-500" />
+            <span>Download</span>
+          </li>
+          <li
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleInfo();
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          >
+            <FaInfoCircle className="mr-3 text-gray-500" />
+            <span>Info</span>
+          </li>
+        </ul>
+      </div>
 
       {showInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">

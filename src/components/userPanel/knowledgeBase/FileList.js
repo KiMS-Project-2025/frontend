@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import { FaEllipsisV, FaFilePdf } from 'react-icons/fa';
-import FileMenu from './FileMenu';  // Import component menu ba chấm
-import { API_URL } from '../../../constant';
-import ModalCategory from './modalCategory';
-import FileView from './FileView';  // Import the new FileView component
+import React, { useState, useEffect } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+import { FaEllipsisV, FaFilePdf } from "react-icons/fa";
+import FileMenu from "./FileMenu"; // Import component menu ba chấm
+import { API_URL } from "../../../constant";
+import ModalCategory from "./modalCategory";
+import FileView from "./FileView"; // Import the new FileView component
+import letterColors from "../../../data/colorData";
+import axios from "axios";
 
 // Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
-  const [thumbnails, setThumbnails] = useState({});  // State để lưu ảnh thumbnail của các file PDF
-  const [activeMenu, setActiveMenu] = useState(null);  // State để quản lý menu ba chấm
+  const [thumbnails, setThumbnails] = useState({}); // State để lưu ảnh thumbnail của các file PDF
+  const [activeMenu, setActiveMenu] = useState(null); // State để quản lý menu ba chấm
   const [menuPosition, setMenuPosition] = useState(null); // State để lưu vị trí của menu
   const [loadingThumbnails, setLoadingThumbnails] = useState({});
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -21,14 +23,23 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   // New state for file content
   const [fileContent, setFileContent] = useState([]);
   const [fileMenuVisible, setFileMenuVisible] = useState(false);
+  const [categories, setCategories] = useState([]);
 
-  // Category options
-  const CATEGORY_OPTIONS = [
-    { id: '1', name: 'IT' },
-    { id: '2', name: 'BA' },
-    { id: '3', name: 'EE' },
-    { id: '4', name: 'EN' },
-  ];
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/category`);
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Generate thumbnails when documents change
   useEffect(() => {
@@ -37,7 +48,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
       if (!pdfFile || loadingThumbnails[id]) return;
 
       try {
-        setLoadingThumbnails(prev => ({ ...prev, [id]: true }));
+        setLoadingThumbnails((prev) => ({ ...prev, [id]: true }));
 
         const arrayBuffer = await pdfFile.arrayBuffer();
         const pdfData = new Uint8Array(arrayBuffer);
@@ -49,8 +60,8 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         const scale = 2;
         const viewport = page.getViewport({ scale });
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
         // Set canvas dimensions
         canvas.width = viewport.width;
@@ -61,19 +72,24 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           canvasContext: context,
           viewport: viewport,
           transform: [1, 0, 0, 1, 0, 0], // No translation, show from top
-          intent: 'display'
+          intent: "display",
         }).promise;
 
-        const imgUrl = canvas.toDataURL('image/jpeg', 1);
+        const imgUrl = canvas.toDataURL("image/jpeg", 1);
 
-        setThumbnails(prev => ({
+        setThumbnails((prev) => ({
           ...prev,
-          [id]: imgUrl
+          [id]: imgUrl,
         }));
       } catch (error) {
-        console.error('Error generating thumbnail for document', id, ':', error);
+        console.error(
+          "Error generating thumbnail for document",
+          id,
+          ":",
+          error
+        );
       } finally {
-        setLoadingThumbnails(prev => ({ ...prev, [id]: false }));
+        setLoadingThumbnails((prev) => ({ ...prev, [id]: false }));
       }
     };
 
@@ -81,7 +97,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
       for (const doc of filteredDocuments) {
         if (!thumbnails[doc.id]) {
           try {
-            setLoadingThumbnails(prev => ({ ...prev, [doc.id]: true }));
+            setLoadingThumbnails((prev) => ({ ...prev, [doc.id]: true }));
 
             // Fetch PDF từ API
             const response = await fetch(`${API_URL}/file?id=${doc.id}`);
@@ -93,7 +109,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           } catch (error) {
             console.error("Error loading PDF for thumbnail:", error);
           } finally {
-            setLoadingThumbnails(prev => ({ ...prev, [doc.id]: false }));
+            setLoadingThumbnails((prev) => ({ ...prev, [doc.id]: false }));
           }
         }
       }
@@ -104,10 +120,11 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // Hàm hiển thị menu khi click vào ba chấm
   const toggleMenu = (e, id) => {
+    // console.log(id)
     const rect = e.target.getBoundingClientRect(); // Lấy vị trí của nút ba chấm
     setMenuPosition({
-      top: rect.bottom,  // Vị trí menu dưới nút ba chấm
-      left: rect.left,   // Căn trái menu với nút ba chấm
+      top: rect.bottom, // Vị trí menu dưới nút ba chấm
+      left: rect.left, // Căn trái menu với nút ba chấm
       right: rect.right, // Căn phải menu với nút ba chấm
     });
     setActiveMenu(activeMenu === id ? null : id); // Toggle menu của mỗi file
@@ -115,48 +132,52 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // Hàm xử lý sửa tên file
   const handleEditName = async (id) => {
-    const newName = prompt('Enter new name:');
+    const newName = prompt("Enter new name:");
     if (newName) {
       try {
         const formData = new URLSearchParams();
-        formData.append('id', id);
-        formData.append('title', newName);
+        formData.append("id", id);
+        formData.append("title", newName);
 
         const response = await fetch(`${API_URL}/file`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          method: "PUT",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString(),
         });
-        if (!response.ok) throw new Error('Failed to update name');
-        setFilteredDocuments((prev) =>
-          prev.map((doc) => doc.id === id ? { ...doc, title: newName } : doc)
-        );
+        if (!response.ok) throw new Error("Failed to update name");
+        // setFilteredDocuments((prev) =>
+        //   prev.map((doc) => (doc.id === id ? { ...doc, title: newName } : doc))
+        // );
+        window.location.reload()
       } catch (error) {
-        alert('Error updating name: ' + error.message);
+        alert("Error updating name: " + error.message);
       }
     }
   };
 
   // Hàm xử lý sửa mô tả file
   const handleEditDescription = async (id) => {
-    const newDescription = prompt('Enter new description:');
+    const newDescription = prompt("Enter new description:");
     if (newDescription) {
       try {
         const formData = new URLSearchParams();
-        formData.append('id', id);
-        formData.append('description', newDescription);
+        formData.append("id", id);
+        formData.append("description", newDescription);
 
         const response = await fetch(`${API_URL}/file`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          method: "PUT",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString(),
         });
-        if (!response.ok) throw new Error('Failed to update description');
-        setFilteredDocuments((prev) =>
-          prev.map((doc) => doc.id === id ? { ...doc, description: newDescription } : doc)
-        );
+        if (!response.ok) throw new Error("Failed to update description");
+        // setFilteredDocuments((prev) =>
+        //   prev.map((doc) =>
+        //     doc.id === id ? { ...doc, description: newDescription } : doc
+        //   )
+        // );
+        window.location.reload()
       } catch (error) {
-        alert('Error updating description: ' + error.message);
+        alert("Error updating description: " + error.message);
       }
     }
   };
@@ -174,24 +195,27 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
     if (!categoryEditDoc) return;
     try {
       const formData = new URLSearchParams();
-      formData.append('id', categoryEditDoc.id);
-      formData.append('cid', id);
+      formData.append("id", categoryEditDoc.id);
+      formData.append("cid", id);
       const response = await fetch(`${API_URL}/file`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        method: "PUT",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString(),
       });
-      if (!response.ok) throw new Error('Failed to update category');
+      if (!response.ok) throw new Error("Failed to update category");
 
-      setFilteredDocuments((prev) =>
-        prev.map((doc) =>
-          doc.id === categoryEditDoc.id ? { ...doc, category: getNameById(id) } : doc
-        )
-      );
-      setShowCategoryModal(false);
-      setCategoryEditDoc(null);
+      // setFilteredDocuments((prev) =>
+      //   prev.map((doc) =>
+      //     doc.id === categoryEditDoc.id
+      //       ? { ...doc, category: getNameById(id) }
+      //       : doc
+      //   )
+      // );
+      // setShowCategoryModal(false);
+      // setCategoryEditDoc(null);
+      window.location.reload()
     } catch (error) {
-      alert('Error updating category: ' + error.message);
+      alert("Error updating category: " + error.message);
     }
   };
 
@@ -199,19 +223,19 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const handleDeleteFile = async (id) => {
     try {
       const formData = new URLSearchParams();
-      formData.append('id', id);
+      formData.append("id", id);
 
       const response = await fetch(`${API_URL}/file`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          "Content-Type": "application/x-www-form-urlencoded",
         },
         body: formData.toString(),
       });
-      if (!response.ok) throw new Error('Failed to delete file');
+      if (!response.ok) throw new Error("Failed to delete file");
       setFilteredDocuments((prev) => prev.filter((doc) => doc.id !== id));
     } catch (error) {
-      alert('Error deleting file: ' + error.message);
+      alert("Error deleting file: " + error.message);
     }
   };
 
@@ -219,31 +243,49 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const handleDownloadFile = async (id) => {
     try {
       if (!id) {
-        alert('Invalid file for download');
+        alert("Invalid file for download");
         return;
       }
       // const response = await fetch(`${API_URL}/file?id=${id}&download=1`);
       // if (!response.ok) throw new Error('Failed to download file');
       // const blob = await response.blob();
 
-      const a = document.createElement('a');
-      a.style.display = 'none';
+      const a = document.createElement("a");
+      a.style.display = "none";
       a.href = `${API_URL}/file?id=${id}&download=1`;
-      a.download = '';
+      a.download = "";
       document.body.appendChild(a);
       a.click();
       a.remove();
     } catch (error) {
-      alert('Error downloading file: ' + error.message);
+      alert("Error downloading file: " + error.message);
     }
   };
 
   // New function to handle file click
   const handleFileClick = async (doc) => {
     setSelectedFile(doc);
+    // console.log(doc);
     try {
+      // First, update the view count using PATCH with axios
+      const patchResponse = await axios.patch(
+        `${API_URL}/file`,
+        {
+          id: doc.id,
+        },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      if (patchResponse.status !== 200)
+        throw new Error("Failed to update view count");
+
+      // Then fetch the file content
       const response = await fetch(`${API_URL}/file?id=${doc.id}`);
-      if (!response.ok) throw new Error('Failed to fetch file content');
+      if (!response.ok) throw new Error("Failed to fetch file content");
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const pdfData = new Uint8Array(arrayBuffer);
@@ -253,31 +295,54 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
       for (let i = 1; i <= numPages; i++) {
         const page = await pdfDoc.getPage(i);
         const viewport = page.getViewport({ scale: 2.0 }); // Increased scale for better readability
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({
           canvasContext: context,
           viewport: viewport,
         }).promise;
-        pages.push(canvas.toDataURL('image/jpeg', 0.8));
+        pages.push(canvas.toDataURL("image/jpeg", 0.8));
       }
       setFileContent(pages);
+
+      // Update the document in the filteredDocuments list with new view count
+      setFilteredDocuments((prev) =>
+        prev.map((item) =>
+          item.id === doc.id
+            ? {
+                ...item,
+                view: (item.view || 0) + 1,
+                history: [...(item.history || []), new Date().toISOString()],
+                modified_at: new Date().toISOString(),
+              }
+            : item
+        )
+      );
     } catch (error) {
-      alert('Error fetching file content: ' + error.message);
+      alert("Error fetching file content: " + error.message);
     }
   };
 
   const getNameById = (id) => {
-    const category = CATEGORY_OPTIONS.find(item => item.id === id);
-    return category ? category.name : null;
+    const category = categories.find((item) => item.id === id);
+    return category ? category.name : "";
+  };
+
+  const getBorderColor = (initial) => {
+    return letterColors[initial] || "border-gray-500";
+    // Convert border color to background color
+    // return colorClass.replace('border-', 'bg-');
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredDocuments.map((doc) => (
-        <div key={doc.id} className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden">
+        <div
+          key={doc.id}
+          className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden"
+        >
           {/* Header with PDF icon and title */}
           <div className="p-4 flex justify-between items-center border-b border-gray-100">
             {/* Make this area clickable to open FileView */}
@@ -286,27 +351,26 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
               onClick={() => handleFileClick(doc)}
             >
               <FaFilePdf className="text-red-500 text-xl" />
-              <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[180px]">{doc.title || "Untitled Document"}</h3>
+              <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[180px]">
+                {doc.title || "Untitled Document"}
+              </h3>
             </div>
             <div className="flex items-center gap-2 ml-2">
               {/* Category tag */}
-              {(getNameById(doc.cid)) && (
+              {doc.category_name && (
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${getNameById(doc.cid) === 'IT' ? 'bg-blue-500 text-white' :
-                    getNameById(doc.cid) === 'BA' ? 'bg-green-500 text-white' :
-                      getNameById(doc.cid) === 'EE' ? 'bg-yellow-500 text-gray-800' :
-                        getNameById(doc.cid) === 'EN' ? 'bg-indigo-500 text-white' :
-                          'bg-red-400 text-white'
-                    }`}
+                  className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${getBorderColor(
+                    doc.category_name[0]
+                  )} border-l-4`}
                 >
-                  {getNameById(doc.cid)}
+                  {doc.category_name}
                 </span>
               )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleMenu(e, doc.id);
-                  setFileMenuVisible(!fileMenuVisible)
+                  // setFileMenuVisible(!fileMenuVisible);
                 }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition"
               >
@@ -316,41 +380,54 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           </div>
 
           {/* PDF thumbnail preview - make this clickable too */}
-          <div className="h-fix bg-gray-50 flex items-center justify-center cursor-pointer" onClick={() => handleFileClick(doc)}>
+          <div
+            className="h-fix bg-gray-50 flex items-center justify-center cursor-pointer"
+            onClick={() => handleFileClick(doc)}
+          >
             {loadingThumbnails[doc.id] ? (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-2"></div>
-                <span className="text-xs text-gray-400">Generating preview...</span>
+                <span className="text-xs text-gray-400">
+                  Generating preview...
+                </span>
               </div>
             ) : thumbnails[doc.id] ? (
               <img
                 src={thumbnails[doc.id]}
                 alt="PDF Thumbnail"
                 className="w-full h-32 object-cover rounded-lg"
-                style={{ objectPosition: 'top' }}
+                style={{ objectPosition: "top" }}
               />
             ) : (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <FaFilePdf className="text-gray-300 text-5xl mb-2" />
-                <span className="text-xs text-gray-400">No preview available</span>
+                <span className="text-xs text-gray-400">
+                  No preview available
+                </span>
               </div>
             )}
           </div>
 
           {/* Document title/description and upload date - make this clickable too */}
-          <div className="p-4 cursor-pointer" onClick={() => handleFileClick(doc)}>
+          <div
+            className="p-4 cursor-pointer"
+            onClick={() => handleFileClick(doc)}
+          >
             <p className="text-sm text-gray-700 font-medium mb-1">
               {doc.shortDescription || doc.description || "Untitled Document"}
             </p>
             <div className="text-xs text-gray-400">
-              Uploaded: {new Date(doc.modified_at).toLocaleString() || "Date not available"}
+              Uploaded:{" "}
+              {new Date(doc.modified_at).toLocaleString() ||
+                "Date not available"}
             </div>
           </div>
 
           {/* Render Menu for actions */}
+
           <FileMenu
             docId={doc.id}
-            isMenuVisible={fileMenuVisible}
+            isMenuVisible={activeMenu === doc.id}
             menuPosition={menuPosition}
             fileData={doc}
             onEdit={handleEditName}
@@ -363,16 +440,22 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
       ))}
       <ModalCategory
         isOpen={showCategoryModal}
-        onClose={() => { setShowCategoryModal(false); setCategoryEditDoc(null); }}
+        onClose={() => {
+          setShowCategoryModal(false);
+          setCategoryEditDoc(null);
+        }}
         onSave={handleSaveCategory}
-        initialCategory={categoryEditDoc ? categoryEditDoc.category : ''}
+        initialCategory={categoryEditDoc ? categoryEditDoc.category : ""}
       />
       {/* Use the new FileView component */}
       {selectedFile && (
         <FileView
           selectedFile={selectedFile}
           fileContent={fileContent}
-          onClose={() => { setSelectedFile(null); setFileContent([]); }}
+          onClose={() => {
+            setSelectedFile(null);
+            setFileContent([]);
+          }}
         />
       )}
     </div>

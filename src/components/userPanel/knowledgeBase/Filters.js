@@ -1,69 +1,86 @@
-import React, { useState } from 'react';
-
-const CATEGORY_OPTIONS = [
-  { id: '1', name: 'IT' },
-  { id: '2', name: 'BA' },
-  { id: '3', name: 'EE' },
-  { id: '4', name: 'EN' },
-];
+import React, { useState, useEffect } from 'react';
+import { FaCalendarAlt, FaTag } from 'react-icons/fa';
+import { API_URL } from '../../../constant';
 
 const Filters = ({ handleSearch }) => {
   // State để quản lý bộ lọc
   const [category, setCategory] = useState('all');
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('newest');
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/category`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Hàm xử lý thay đổi bộ lọc
   const handleCategoryChange = (e) => {
-    console.log('Category changed to:', e.target.value); // Debug log
-    setCategory(e.target.value);
+    const newCategory = e.target.value;
+    setCategory(newCategory);
+    handleSearch(newCategory, sortOrder);
   };
 
-  const handleSortOrderChange = (e) => {
-    console.log('Sort order changed to:', e.target.value); // Debug log
-    setSortOrder(e.target.value);
-  };
-
-  // Hàm xử lý nhấn nút Search
-  const handleSearchClick = () => {
-    console.log('Search clicked with:', { category, sortOrder }); // Debug log
-    // Gọi hàm handleSearch với các bộ lọc hiện tại
-    handleSearch(category, sortOrder);
+  const handleSortChange = (e) => {
+    const newSortOrder = e.target.value;
+    setSortOrder(newSortOrder);
+    handleSearch(category, newSortOrder);
   };
 
   return (
-    <div className="flex gap-4 items-center">
-      <div className="flex items-center">
-        <label className="mr-2">Filter by Category</label>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Category Filter */}
+      <div className="space-y-2">
+        <label className="flex items-center text-sm font-medium text-gray-700">
+          <FaTag className="mr-2 text-gray-400" />
+          Category
+        </label>
         <select
-          className="p-2 border border-gray-300 rounded-lg"
           value={category}
           onChange={handleCategoryChange}
+          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
         >
           <option value="all">All Categories</option>
-          {CATEGORY_OPTIONS.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
+          {loading ? (
+            <option value="" disabled>Loading categories...</option>
+          ) : (
+            categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))
+          )}
         </select>
       </div>
-      <div className="flex items-center">
-        <label className="mr-2">Sort by Date</label>
+
+      {/* Sort Order */}
+      <div className="space-y-2">
+        <label className="flex items-center text-sm font-medium text-gray-700">
+          <FaCalendarAlt className="mr-2 text-gray-400" />
+          Sort By
+        </label>
         <select
-          className="p-2 border border-gray-300 rounded-lg"
           value={sortOrder}
-          onChange={handleSortOrderChange}
+          onChange={handleSortChange}
+          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
         </select>
       </div>
-
-      {/* Nút Search */}
-      <button
-        onClick={handleSearchClick}
-        className="ml-4 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-      >
-        Search
-      </button>
     </div>
   );
 };

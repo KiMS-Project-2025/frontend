@@ -34,14 +34,14 @@ const FrequentSites = ({ documents = [], setRecentDocuments, handleStar, onCardC
     return (
       <div className="w-3/4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Frequent Sites</h2>
-        <p className="text-gray-500">No documents available</p>
+        <p className="text-gray-500">No sites available</p>
       </div>
     );
   }
 
   return (
     <div className="w-3/4">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Frequent Documents</h2>
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Frequent Sites</h2>
       <div className="grid grid-cols-3 gap-6">
         {documents.map((doc) => (
           <div

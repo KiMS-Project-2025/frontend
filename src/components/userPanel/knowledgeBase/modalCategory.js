@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from 'react';
-
-const CATEGORY_OPTIONS = [
-  { id: '1', name: 'IT' },
-  { id: '2', name: 'BA' },
-  { id: '3', name: 'EE' },
-  { id: '4', name: 'EN' },
-];
+import { API_URL } from '../../../constant';
 
 const ModalCategory = ({ isOpen, onClose, onSave, initialCategory }) => {
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory || CATEGORY_OPTIONS[0].id);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || '');
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    setSelectedCategory(initialCategory || CATEGORY_OPTIONS[0].id);
-  }, [initialCategory, isOpen]);
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/category`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data);
+        if (!initialCategory && data.length > 0) {
+          setSelectedCategory(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    } else if (categories.length > 0) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [initialCategory, categories, isOpen]);
 
   if (!isOpen) return null;
 
@@ -33,7 +50,7 @@ const ModalCategory = ({ isOpen, onClose, onSave, initialCategory }) => {
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
           >
-            {CATEGORY_OPTIONS.map(option => (
+            {categories.map(option => (
               <option key={option.id} value={option.id}>{option.name}</option>
             ))}
           </select>
