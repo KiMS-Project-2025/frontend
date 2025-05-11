@@ -4,14 +4,16 @@ import { FaEllipsisV, FaFilePdf } from "react-icons/fa";
 import FileMenu from "./FileMenu"; // Import component menu ba chấm
 import { API_URL } from "../../../constant";
 import ModalCategory from "./modalCategory";
-import FileView from "./FileView"; // Import the new FileView component
+import PageViewer from "./PageViewer";
 import letterColors from "../../../data/colorData";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 // Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
+  const navigate = useNavigate();
   const [thumbnails, setThumbnails] = useState({}); // State để lưu ảnh thumbnail của các file PDF
   const [activeMenu, setActiveMenu] = useState(null); // State để quản lý menu ba chấm
   const [menuPosition, setMenuPosition] = useState(null); // State để lưu vị trí của menu
@@ -20,8 +22,6 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const [categoryEditDoc, setCategoryEditDoc] = useState(null);
   // New state for selected file modal
   const [selectedFile, setSelectedFile] = useState(null);
-  // New state for file content
-  const [fileContent, setFileContent] = useState([]);
   const [fileMenuVisible, setFileMenuVisible] = useState(false);
   const [categories, setCategories] = useState([]);
 
@@ -264,10 +264,8 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // New function to handle file click
   const handleFileClick = async (doc) => {
-    setSelectedFile(doc);
-    // console.log(doc);
     try {
-      // First, update the view count using PATCH with axios
+      // First, update the view count using PATCH
       const patchResponse = await axios.patch(
         `${API_URL}/file`,
         {
@@ -280,32 +278,9 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         }
       );
 
-      if (patchResponse.status !== 200)
+      if (patchResponse.status !== 200) {
         throw new Error("Failed to update view count");
-
-      // Then fetch the file content
-      const response = await fetch(`${API_URL}/file?id=${doc.id}`);
-      if (!response.ok) throw new Error("Failed to fetch file content");
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const pdfData = new Uint8Array(arrayBuffer);
-      const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
-      const numPages = pdfDoc.numPages;
-      const pages = [];
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdfDoc.getPage(i);
-        const viewport = page.getViewport({ scale: 2.0 }); // Increased scale for better readability
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({
-          canvasContext: context,
-          viewport: viewport,
-        }).promise;
-        pages.push(canvas.toDataURL("image/jpeg", 0.8));
       }
-      setFileContent(pages);
 
       // Update the document in the filteredDocuments list with new view count
       setFilteredDocuments((prev) =>
@@ -320,8 +295,12 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             : item
         )
       );
+
+      // Navigate to the file viewer page
+      navigate(`/file/${doc.id}`);
     } catch (error) {
-      alert("Error fetching file content: " + error.message);
+      console.error("Error handling file click:", error);
+      alert("Error opening file: " + error.message);
     }
   };
 
@@ -447,15 +426,11 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         onSave={handleSaveCategory}
         initialCategory={categoryEditDoc ? categoryEditDoc.category : ""}
       />
-      {/* Use the new FileView component */}
+      {/* Page Viewer Modal */}
       {selectedFile && (
-        <FileView
+        <PageViewer
           selectedFile={selectedFile}
-          fileContent={fileContent}
-          onClose={() => {
-            setSelectedFile(null);
-            setFileContent([]);
-          }}
+          onClose={() => setSelectedFile(null)}
         />
       )}
     </div>

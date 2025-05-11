@@ -90,7 +90,7 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
                       key={result.id}
                       className="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer transition"
                       onClick={() => {
-                        navigate(`/page-layout/${result.id}`);
+                        navigate(`/file/${result.id}`);
                         setShowDropdown(false);
                       }}
                     >

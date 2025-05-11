@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Dashboard from './components/userPanel/dashboard/Dashboard';  // Import Dashboard
 import PageLayout from './components/userPanel/knowledgeBase/PageLayout';  // Import PageLayout
 import SearchPage from './components/userPanel/search/SearchPage';
+import FileViewerPage from './components/userPanel/knowledgeBase/FileViewerPage';
 
 function App() {
   return (
@@ -17,6 +18,9 @@ function App() {
 
         {/* Search page route */}
         <Route path="/search" element={<SearchPage />} />
+
+        {/* File viewer route */}
+        <Route path="/file/:fileId" element={<FileViewerPage />} />
       </Routes>
     </Router>
   );

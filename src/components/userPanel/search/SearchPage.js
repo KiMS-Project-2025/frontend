@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist";
 import { API_URL } from "../../../constant";
 import FileMenu from "../knowledgeBase/FileMenu";
-import FileView from "../knowledgeBase/FileView";
 import ModalCategory from "../knowledgeBase/modalCategory";
 import letterColors from '../../../data/colorData';
 // Set up PDF.js worker
@@ -27,9 +26,6 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuPositions, setMenuPositions] = useState({});
-  const [viewingFile, setViewingFile] = useState(null);
-  const [fileContent, setFileContent] = useState([]);
-  const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [thumbnails, setThumbnails] = useState({});
   const [loadingThumbnails, setLoadingThumbnails] = useState({});
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -307,35 +303,41 @@ const SearchPage = () => {
   };
 
   const handleOpenFileView = async (file) => {
-    setIsLoadingFile(true);
-    setViewingFile(file);
     try {
-      const response = await fetch(`${API_URL}/file?id=${file.id}`);
-      if (!response.ok) throw new Error("Failed to load file");
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const pdfData = new Uint8Array(arrayBuffer);
-      const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
-      const numPages = pdfDoc.numPages;
-      const pages = [];
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdfDoc.getPage(i);
-        const viewport = page.getViewport({ scale: 2.0 }); // Increased scale for better quality
-        const canvas = document.createElement("canvas");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const context = canvas.getContext("2d");
-        await page.render({
-          canvasContext: context,
-          viewport,
-          background: "white",
-        }).promise;
-        const imgUrl = canvas.toDataURL("image/jpeg", 0.95);
-        pages.push(imgUrl);
+      // First, update the view count using PATCH
+      const response = await fetch(`${API_URL}/file`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          id: file.id,
+        }).toString(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update view count');
       }
-      setFileContent(pages);
+
+      // Update the document in the search results with new view count
+      setSearchResults(prev =>
+        prev.map(item =>
+          item.id === file.id
+            ? {
+                ...item,
+                view: (item.view || 0) + 1,
+                history: [...(item.history || []), new Date().toISOString()],
+                modified_at: new Date().toISOString(),
+              }
+            : item
+        )
+      );
+
+      // Navigate to the file viewer page
+      navigate(`/file/${file.id}`);
     } catch (error) {
-      alert("Error loading file viewer: " + error.message);
+      console.error('Error handling file click:', error);
+      alert('Error opening file: ' + error.message);
     }
   };
 
@@ -561,14 +563,6 @@ const SearchPage = () => {
       </div>
 
       {/* Modals and Menus */}
-      {viewingFile && (
-        <FileView
-          selectedFile={viewingFile}
-          fileContent={fileContent}
-          onClose={handleCloseFileView}
-          isLoading={isLoadingFile}
-        />
-      )}
       <ModalCategory
         isOpen={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
