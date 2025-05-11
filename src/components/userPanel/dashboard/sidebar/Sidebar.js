@@ -28,11 +28,11 @@ const Sidebar = ({ recentDocuments, handleStar, addFrequentSite }) => {
     <div className="w-1/5 bg-white p-6 rounded-tr-xl shadow-md min-h-screen">
       <div className="space-y-4">
         {/* Create Site Button */}
-        <button 
-          className="w-full py-2 text-left border-gray-300 rounded-lg flex items-center" 
+        <button
+          className="w-full py-2 text-left border-gray-300 rounded-lg flex items-center"
           onClick={openModal}
         >
-          <FaPlus className="mr-2 text-gray-600" /> Create Site
+          <FaPlus className="mr-2 text-gray-600" /> Create Document
         </button>
 
         {/* Modal to Create New Site */}
@@ -67,32 +67,19 @@ const Sidebar = ({ recentDocuments, handleStar, addFrequentSite }) => {
 
         {/* Following Section */}
         <div>
-          <h3 className="font-semibold text-lg text-gray-700">Following</h3>
+          <h3 className="font-semibold text-lg text-gray-700">Favorites</h3>
           <div className="space-y-2 mt-2">
             {recentDocuments
               .filter((doc) => doc.starred)
               .map((doc) => (
                 <div key={doc.id} className="flex items-center gap-2">
-                  <FaStar className="text-yellow-400" />
+                  <FaStar
+                    className={`cursor-pointer ${doc.starred ? 'text-yellow-400' : 'text-gray-400'}`}
+                    onClick={() => handleStar(doc.id)}
+                  />
                   <p className="text-gray-600">{doc.title}</p>
                 </div>
               ))}
-          </div>
-        </div>
-
-        {/* Recent Documents Section */}
-        <div>
-          <h3 className="font-semibold text-lg text-gray-700">Recent Documents</h3>
-          <div className="space-y-2 mt-2">
-            {recentDocuments.map((doc) => (
-              <div key={doc.id} className="flex items-center gap-2">
-                <FaStar
-                  className={`cursor-pointer ${doc.starred ? 'text-yellow-400' : 'text-gray-400'}`}
-                  onClick={() => handleStar(doc.id)}
-                />
-                <p className="text-gray-600">{doc.title}</p>
-              </div>
-            ))}
           </div>
         </div>
       </div>

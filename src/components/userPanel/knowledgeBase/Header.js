@@ -12,10 +12,17 @@ const Header = ({ title, toggleDropdown, dropdownOpen, documentTitle, onSearchRe
             const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(searchQuery)}`);
             if (!response.ok) throw new Error('Search failed');
             const data = await response.json();
-            onSearchResults(Array.isArray(data) ? data : [data]);
+
+            onSearchResults(data);
         } catch (error) {
             alert('Error searching: ' + error.message);
             onSearchResults([]);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
         }
     };
 
@@ -35,9 +42,10 @@ const Header = ({ title, toggleDropdown, dropdownOpen, documentTitle, onSearchRe
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-transparent border-none focus:outline-none text-gray-700"
+                        onKeyDown={handleKeyPress}
                     />
                     <button onClick={handleSearch} className="ml-2 bg-blue-600 text-white px-3 py-1 rounded">
-                        Search
+                        <FaSearch />
                     </button>
                 </div>
             </div>

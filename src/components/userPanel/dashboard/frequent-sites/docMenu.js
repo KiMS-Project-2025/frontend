@@ -20,7 +20,7 @@ const DocMenu = ({ docId, docTitle, menuPosition, isMenuVisible, onEditSuccess, 
       });
       if (response.ok) {
         const updatedDoc = await response.json();
-        onEditSuccess(updatedDoc);
+        onEditSuccess(updatedDoc.id, updatedDoc.title);
       } else {
         alert('Failed to update document name');
       }

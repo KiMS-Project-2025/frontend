@@ -15,7 +15,6 @@ const Dashboard = () => {
       try {
         const response = await fetch(`${API_URL}/home`);
         const data = await response.json();
-        console.log('API Response:', data); // Debug log
 
         if (!data || !Array.isArray(data)) {
           console.error('Invalid data format:', data);
@@ -112,6 +111,7 @@ const Dashboard = () => {
         {/* Frequent Sites Component: Truyền các props vào FrequentSites */}
         <FrequentSites
           documents={recentDocuments}
+          setRecentDocuments={setRecentDocuments}
           handleStar={handleStar}
           onCardClick={handleCardClick}
         />

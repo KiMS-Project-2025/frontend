@@ -4,16 +4,10 @@ import { FaEllipsisV, FaFilePdf } from 'react-icons/fa';
 import FileMenu from './FileMenu';  // Import component menu ba chấm
 import { API_URL } from '../../../constant';
 import ModalCategory from './modalCategory';
+import FileView from './FileView';  // Import the new FileView component
 
 // Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-const CATEGORY_MAP = {
-  '1': 'IT',
-  '2': 'BA',
-  '3': 'EE',
-  '4': 'EN',
-};
 
 const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const [thumbnails, setThumbnails] = useState({});  // State để lưu ảnh thumbnail của các file PDF
@@ -22,6 +16,11 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const [loadingThumbnails, setLoadingThumbnails] = useState({});
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [categoryEditDoc, setCategoryEditDoc] = useState(null);
+  // New state for selected file modal
+  const [selectedFile, setSelectedFile] = useState(null);
+  // New state for file content
+  const [fileContent, setFileContent] = useState([]);
+  const [fileMenuVisible, setFileMenuVisible] = useState(false);
 
   // Category options
   const CATEGORY_OPTIONS = [
@@ -31,56 +30,53 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
     { id: '4', name: 'EN' },
   ];
 
-  // Function to generate thumbnail from PDF
-  const generateThumbnail = async (pdfFile, id) => {
-    if (!pdfFile || loadingThumbnails[id]) return;
-
-    try {
-      setLoadingThumbnails(prev => ({ ...prev, [id]: true }));
-
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      const pdfData = new Uint8Array(arrayBuffer);
-
-      const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
-      const page = await pdfDoc.getPage(1);
-
-      // Get the original viewport
-      const originalViewport = page.getViewport({ scale: 2.5 });
-      
-      // Calculate scale to fit width
-      const scale = 2;
-      const viewport = page.getViewport({ scale });
-
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-
-      // Set canvas dimensions
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      // Render only the top portion of the page
-      await page.render({
-        canvasContext: context,
-        viewport: viewport,
-        transform: [1, 0, 0, 1, 0, 0], // No translation, show from top
-        intent: 'display'
-      }).promise;
-
-      const imgUrl = canvas.toDataURL('image/jpeg', 0.8);
-
-      setThumbnails(prev => ({
-        ...prev,
-        [id]: imgUrl
-      }));
-    } catch (error) {
-      console.error('Error generating thumbnail for document', id, ':', error);
-    } finally {
-      setLoadingThumbnails(prev => ({ ...prev, [id]: false }));
-    }
-  };
-
   // Generate thumbnails when documents change
   useEffect(() => {
+    // Function to generate thumbnail from PDF
+    const generateThumbnail = async (pdfFile, id) => {
+      if (!pdfFile || loadingThumbnails[id]) return;
+
+      try {
+        setLoadingThumbnails(prev => ({ ...prev, [id]: true }));
+
+        const arrayBuffer = await pdfFile.arrayBuffer();
+        const pdfData = new Uint8Array(arrayBuffer);
+
+        const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
+        const page = await pdfDoc.getPage(1);
+
+        // Calculate scale to fit width
+        const scale = 2;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        // Set canvas dimensions
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        // Render only the top portion of the page
+        await page.render({
+          canvasContext: context,
+          viewport: viewport,
+          transform: [1, 0, 0, 1, 0, 0], // No translation, show from top
+          intent: 'display'
+        }).promise;
+
+        const imgUrl = canvas.toDataURL('image/jpeg', 1);
+
+        setThumbnails(prev => ({
+          ...prev,
+          [id]: imgUrl
+        }));
+      } catch (error) {
+        console.error('Error generating thumbnail for document', id, ':', error);
+      } finally {
+        setLoadingThumbnails(prev => ({ ...prev, [id]: false }));
+      }
+    };
+
     const generateThumbnailsForDocuments = async () => {
       for (const doc of filteredDocuments) {
         if (!thumbnails[doc.id]) {
@@ -112,6 +108,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
     setMenuPosition({
       top: rect.bottom,  // Vị trí menu dưới nút ba chấm
       left: rect.left,   // Căn trái menu với nút ba chấm
+      right: rect.right, // Căn phải menu với nút ba chấm
     });
     setActiveMenu(activeMenu === id ? null : id); // Toggle menu của mỗi file
   };
@@ -225,30 +222,50 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         alert('Invalid file for download');
         return;
       }
-      const response = await fetch(`${API_URL}/file?id=${id}&download=1`);
-      if (!response.ok) throw new Error('Failed to download file');
-      const blob = await response.blob();
+      // const response = await fetch(`${API_URL}/file?id=${id}&download=1`);
+      // if (!response.ok) throw new Error('Failed to download file');
+      // const blob = await response.blob();
 
-      // Try to get filename from Content-Disposition header
-      let filename = 'download.pdf';
-      const disposition = response.headers.get('Content-Disposition');
-      if (disposition && disposition.includes('filename=')) {
-        filename = disposition.split('filename=')[1].replace(/"/g, '');
-      }
-
-      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
-      a.href = url;
+      a.href = `${API_URL}/file?id=${id}&download=1`;
       a.download = '';
       document.body.appendChild(a);
       a.click();
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        a.remove();
-      }, 100);
+      a.remove();
     } catch (error) {
       alert('Error downloading file: ' + error.message);
+    }
+  };
+
+  // New function to handle file click
+  const handleFileClick = async (doc) => {
+    setSelectedFile(doc);
+    try {
+      const response = await fetch(`${API_URL}/file?id=${doc.id}`);
+      if (!response.ok) throw new Error('Failed to fetch file content');
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const pdfData = new Uint8Array(arrayBuffer);
+      const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
+      const numPages = pdfDoc.numPages;
+      const pages = [];
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 2.0 }); // Increased scale for better readability
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({
+          canvasContext: context,
+          viewport: viewport,
+        }).promise;
+        pages.push(canvas.toDataURL('image/jpeg', 0.8));
+      }
+      setFileContent(pages);
+    } catch (error) {
+      alert('Error fetching file content: ' + error.message);
     }
   };
 
@@ -263,27 +280,34 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         <div key={doc.id} className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden">
           {/* Header with PDF icon and title */}
           <div className="p-4 flex justify-between items-center border-b border-gray-100">
-            <div className="flex items-center">
+            {/* Make this area clickable to open FileView */}
+            <div
+              className="flex items-center flex-1 min-w-0 cursor-pointer"
+              onClick={() => handleFileClick(doc)}
+            >
               <FaFilePdf className="text-red-500 text-xl" />
               <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[180px]">{doc.title || "Untitled Document"}</h3>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-2">
               {/* Category tag */}
               {(getNameById(doc.cid)) && (
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${
-                    getNameById(doc.cid) === 'IT' ? 'bg-blue-500 text-white' :
+                  className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${getNameById(doc.cid) === 'IT' ? 'bg-blue-500 text-white' :
                     getNameById(doc.cid) === 'BA' ? 'bg-green-500 text-white' :
-                    getNameById(doc.cid) === 'EE' ? 'bg-yellow-500 text-gray-800' :
-                    getNameById(doc.cid) === 'EN' ? 'bg-indigo-500 text-white' :
-                    'bg-red-400 text-white'
-                  }`}
+                      getNameById(doc.cid) === 'EE' ? 'bg-yellow-500 text-gray-800' :
+                        getNameById(doc.cid) === 'EN' ? 'bg-indigo-500 text-white' :
+                          'bg-red-400 text-white'
+                    }`}
                 >
                   {getNameById(doc.cid)}
                 </span>
               )}
               <button
-                onClick={(e) => toggleMenu(e, doc.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMenu(e, doc.id);
+                  setFileMenuVisible(!fileMenuVisible)
+                }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition"
               >
                 <FaEllipsisV />
@@ -291,8 +315,8 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             </div>
           </div>
 
-          {/* PDF thumbnail preview */}
-          <div className="h-fix bg-gray-50 flex items-center justify-center">
+          {/* PDF thumbnail preview - make this clickable too */}
+          <div className="h-fix bg-gray-50 flex items-center justify-center cursor-pointer" onClick={() => handleFileClick(doc)}>
             {loadingThumbnails[doc.id] ? (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-2"></div>
@@ -313,8 +337,8 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             )}
           </div>
 
-          {/* Document title/description and upload date */}
-          <div className="p-4">
+          {/* Document title/description and upload date - make this clickable too */}
+          <div className="p-4 cursor-pointer" onClick={() => handleFileClick(doc)}>
             <p className="text-sm text-gray-700 font-medium mb-1">
               {doc.shortDescription || doc.description || "Untitled Document"}
             </p>
@@ -326,7 +350,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           {/* Render Menu for actions */}
           <FileMenu
             docId={doc.id}
-            isMenuVisible={activeMenu === doc.id}
+            isMenuVisible={fileMenuVisible}
             menuPosition={menuPosition}
             fileData={doc}
             onEdit={handleEditName}
@@ -343,6 +367,14 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         onSave={handleSaveCategory}
         initialCategory={categoryEditDoc ? categoryEditDoc.category : ''}
       />
+      {/* Use the new FileView component */}
+      {selectedFile && (
+        <FileView
+          selectedFile={selectedFile}
+          fileContent={fileContent}
+          onClose={() => { setSelectedFile(null); setFileContent([]); }}
+        />
+      )}
     </div>
   );
 };

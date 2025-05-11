@@ -8,7 +8,6 @@ import { API_URL } from '../../../constant';
 const PageLayout = () => { 
   const { id } = useParams();
   const [document, setDocument] = useState(null);
-  const [files, setFiles] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [fileName] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -32,7 +31,6 @@ const PageLayout = () => {
           setFilteredDocuments([]);
         } else {
           setDocument(data);
-          setFiles(data.files || []);
           setFilteredDocuments(data.files || []);
         }
       } catch (error) {
@@ -60,6 +58,7 @@ const PageLayout = () => {
             title={document ? document.title : fileName || 'Document Not Found'} 
             toggleDropdown={toggleDropdown} 
             dropdownOpen={dropdownOpen} 
+            onSearchResults={setFilteredDocuments}
         />
       </div>
 
@@ -68,6 +67,7 @@ const PageLayout = () => {
         filteredDocuments={filteredDocuments} 
         setFilteredDocuments={setFilteredDocuments}
         documentId={id}
+        document={document}
       />
     </div>
   );

@@ -14,15 +14,18 @@ const Filters = ({ handleSearch }) => {
 
   // Hàm xử lý thay đổi bộ lọc
   const handleCategoryChange = (e) => {
+    console.log('Category changed to:', e.target.value); // Debug log
     setCategory(e.target.value);
   };
 
   const handleSortOrderChange = (e) => {
+    console.log('Sort order changed to:', e.target.value); // Debug log
     setSortOrder(e.target.value);
   };
 
   // Hàm xử lý nhấn nút Search
   const handleSearchClick = () => {
+    console.log('Search clicked with:', { category, sortOrder }); // Debug log
     // Gọi hàm handleSearch với các bộ lọc hiện tại
     handleSearch(category, sortOrder);
   };

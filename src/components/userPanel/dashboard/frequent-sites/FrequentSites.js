@@ -4,14 +4,14 @@ import letterColors from '../../../../data/colorData';
 import { useNavigate } from 'react-router-dom';
 import DocMenu from './docMenu';
 
-const FrequentSites = ({ documents = [], handleStar, onCardClick }) => {
-  
+const FrequentSites = ({ documents = [], setRecentDocuments, handleStar, onCardClick }) => {
+
   const [docMenuVisible, setDocMenuVisible] = useState(false);
   const [docMenuPosition, setDocMenuPosition] = useState({ top: 0, left: 0 });
   const [selectedDoc, setSelectedDoc] = useState(null);
 
   const getBorderColor = (initial) => {
-    return letterColors[initial] || 'border-gray-500'; 
+    return letterColors[initial] || 'border-gray-500';
   };
 
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const FrequentSites = ({ documents = [], handleStar, onCardClick }) => {
     if (onCardClick) {
       onCardClick(docId);
     } else {
-      navigate(`/page-layout/${docId}`);  
+      navigate(`/page-layout/${docId}`);
     }
   };
 
@@ -29,8 +29,6 @@ const FrequentSites = ({ documents = [], handleStar, onCardClick }) => {
     setSelectedDoc(doc);
     setDocMenuVisible(true);
   };
-
-  const closeDocMenu = () => setDocMenuVisible(false);
 
   if (!documents || documents.length === 0) {
     return (
@@ -53,7 +51,12 @@ const FrequentSites = ({ documents = [], handleStar, onCardClick }) => {
             style={{ cursor: 'pointer' }}
           >
             <div className="flex justify-between items-center">
-              <div className="font-semibold text-xl text-gray-800">{doc.title || 'Untitled'}</div>
+              <div
+                className="font-semibold text-xl text-gray-800 truncate max-w-[180px]"
+                title={doc.title || 'Untitled'}
+              >
+                {doc.title || 'Untitled'}
+              </div>
               <div className="flex items-center">
                 <FaStar
                   className={`cursor-pointer ${doc.starred ? 'text-yellow-400' : 'text-gray-400'}`}
@@ -74,8 +77,8 @@ const FrequentSites = ({ documents = [], handleStar, onCardClick }) => {
               </div>
             </div>
 
-            <p className="text-gray-600 mt-2"> 
-                <p>Modified at: {doc.modified_at ? new Date(doc.modified_at).toLocaleString() : 'No date'}</p> 
+            <p className="text-gray-600 mt-2">
+              <p>Modified at: {doc.modified_at ? new Date(doc.modified_at).toLocaleString() : 'No date'}</p>
             </p>
 
             <div className="mt-4 text-xs space-y-1">
@@ -95,7 +98,14 @@ const FrequentSites = ({ documents = [], handleStar, onCardClick }) => {
           docTitle={selectedDoc.title}
           menuPosition={docMenuPosition}
           isMenuVisible={docMenuVisible}
-          onEditSuccess={(newName) => {
+          onEditSuccess={(id, newTitle) => {
+            // change name here
+            setRecentDocuments((prevDocs) =>
+              prevDocs.map((doc) =>
+                doc.id === id ? { ...doc, title: newTitle } : doc
+              )
+            )
+
             setDocMenuVisible(false);
           }}
           onDeleteSuccess={() => {

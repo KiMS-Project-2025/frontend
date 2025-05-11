@@ -50,7 +50,18 @@ const letterColors = {
     Y: 'border-yellow-700',    
     y: 'border-yellow-700',    
     Z: 'border-indigo-700',    
-    z: 'border-indigo-700',    
+    z: 'border-indigo-700', 
+    0: 'border-red-700',
+    1: 'border-black-700',
+    2: 'border-green-700',
+    3: 'border-blue-700',
+    4: 'border-indigo-700',
+    5: 'border-yellow-700',
+    6: 'border-green-700',
+    7: 'border-blue-700',
+    8: 'border-indigo-700',
+    9: 'border-yellow-700',
+    
   };
   
   export default letterColors;
