@@ -24,6 +24,9 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileMenuVisible, setFileMenuVisible] = useState(false);
   const [categories, setCategories] = useState([]);
+  // Add new state for info modal
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoData, setInfoData] = useState(null);
 
   // Fetch categories from API
   useEffect(() => {
@@ -141,6 +144,25 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   const handleClickOutside = () => {
     setActiveMenu(null);
+  };
+
+  // Update handleShowInfo function
+  const handleShowInfo = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/file?id=${id}&detail=1`);
+      if (!response.ok) throw new Error('Failed to fetch file info');
+      const data = await response.json();
+      setInfoData(data);
+      setShowInfoModal(true);
+    } catch (error) {
+      alert('Error fetching file info: ' + error.message);
+    }
+  };
+
+  // Add function to close info modal
+  const handleCloseInfoModal = () => {
+    setShowInfoModal(false);
+    setInfoData(null);
   };
 
   // Hàm xử lý sửa tên file
@@ -318,8 +340,13 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
   };
 
   const getNameById = (id) => {
-    const category = categories.find((item) => item.id === id);
-    return category ? category.name : "";
+    if (!id) return "";
+    // Convert both the input id and category.id to numbers for comparison
+    const category = categories.find((item) => Number(item.id) === Number(id));
+    console.log('Category ID:', id, 'Type:', typeof id);
+    console.log('All Categories:', categories);
+    console.log('Found Category:', category);
+    return category ? category.name : id; // Return the ID if category not found
   };
 
   const getBorderColor = (initial) => {
@@ -347,38 +374,39 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
                 {doc.title || "Untitled Document"}
               </h3>
             </div>
-            <div className="flex items-center gap-2 ml-2">
-              {/* Category tag */}
-              {doc.category_name && (
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${getBorderColor(
-                    doc.category_name[0]
-                  )} border-l-4`}
-                >
-                  {doc.category_name}
-                </span>
-              )}
-              <div className="relative">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleMenu(e, doc.id);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition hover:bg-gray-100"
-                >
-                  <FaEllipsisV />
-                </button>
-                <FileMenu
-                  isMenuVisible={activeMenu === doc.id}
-                  menuPosition={menuPosition}
-                  onEdit={() => handleEditName(doc.id)}
-                  onEditDescription={() => handleEditDescription(doc.id)}
-                  onEditCategory={() => handleEditCategory(doc.id)}
-                  onDelete={() => handleDeleteFile(doc.id)}
-                  onDownload={() => handleDownloadFile(doc.id)}
-                  onClose={handleClickOutside}
-                />
-              </div>
+            
+            {/* Category tag */}
+            {doc.category_name && (
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-semibold w-fit ${getBorderColor(
+                  doc.category_name[0]
+                )} border-l-4`}
+              >
+                {doc.category_name}
+              </span>
+            )}
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMenu(e, doc.id);
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition hover:bg-gray-100"
+              >
+                <FaEllipsisV />
+              </button>
+              <FileMenu
+                docId={doc.id}
+                isMenuVisible={activeMenu === doc.id}
+                menuPosition={menuPosition}
+                onEdit={() => handleEditName(doc.id)}
+                onEditDescription={() => handleEditDescription(doc.id)}
+                onEditCategory={() => handleEditCategory(doc.id)}
+                onDelete={() => handleDeleteFile(doc.id)}
+                onDownload={() => handleDownloadFile(doc.id)}
+                onInfo={() => handleShowInfo(doc.id)}
+                onClose={handleClickOutside}
+              />
             </div>
           </div>
 
@@ -442,6 +470,63 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           selectedFile={selectedFile}
           onClose={() => setSelectedFile(null)}
         />
+      )}
+
+      {/* Info Modal */}
+      {showInfoModal && infoData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-xl font-semibold text-gray-800">File Information</h4>
+              <button
+                onClick={handleCloseInfoModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="font-medium text-gray-600">Title:</span>
+                <span className="text-gray-800">{infoData.title || 'Untitled'}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="font-medium text-gray-600">Description:</span>
+                <span className="text-gray-800">{infoData.description || 'No description'}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="font-medium text-gray-600">Category:</span>
+                <span className="text-gray-800">
+                  {infoData.cid ? getNameById(infoData.cid) : 'Uncategorized'}
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="font-medium text-gray-600">Author:</span>
+                <span className="text-gray-800">{infoData.author || 'Unknown'}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="font-medium text-gray-600">Modified at:</span>
+                <span className="text-gray-800">
+                  {infoData.modified_at ? new Date(infoData.modified_at).toLocaleString() : 'Unknown'}
+                </span>
+              </div>
+              {infoData.history && infoData.history.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium text-gray-600">View History:</span>
+                  <div className="max-h-32 overflow-y-auto">
+                    {infoData.history.map((date, index) => (
+                      <div key={index} className="text-sm text-gray-600">
+                        {new Date(date).toLocaleString()}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
