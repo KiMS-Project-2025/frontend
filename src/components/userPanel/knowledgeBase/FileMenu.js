@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaDownload, FaInfoCircle } from 'react-icons/fa';
 import { API_URL } from '../../../constant';
+import useClickOutside from '../../../hooks/useClickOutside';
 
 const FileMenu = ({
   docId,
@@ -11,10 +12,26 @@ const FileMenu = ({
   onDownload,
   onEditDescription,
   onEditCategory,
+  onClose
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [infoData, setInfoData] = useState(null);
   const [categories, setCategories] = useState([]);
+
+  const menuRef = useClickOutside(() => {
+    if (onClose) {
+      setShowInfo(false);
+      setInfoData(null);
+      onClose();
+    }
+  });
+
+  useEffect(() => {
+    if (!isMenuVisible) {
+      setShowInfo(false);
+      setInfoData(null);
+    }
+  }, [isMenuVisible]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -51,15 +68,16 @@ const FileMenu = ({
     return category ? category.name : categoryId;
   };
 
-  if (!isMenuVisible || !menuPosition) return null;
+  if (!isMenuVisible) return null;
 
   return (
     <>
       <div
+        ref={menuRef}
         className="file-menu absolute z-10 bg-white shadow-lg rounded-lg p-4"
         style={{
-          top: menuPosition.top,
-          left: menuPosition.left,
+          top: menuPosition?.top || 0,
+          left: menuPosition?.left || 0,
           minWidth: '200px'
         }}
       >

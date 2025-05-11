@@ -3,12 +3,17 @@ import { FaStar, FaEllipsisV } from 'react-icons/fa';
 import letterColors from '../../../../data/colorData';
 import { useNavigate } from 'react-router-dom';
 import DocMenu from './docMenu';
+import useClickOutside from '../../../../hooks/useClickOutside';
 
 const FrequentSites = ({ documents = [], setRecentDocuments, handleStar, onCardClick }) => {
 
   const [docMenuVisible, setDocMenuVisible] = useState(false);
   const [docMenuPosition, setDocMenuPosition] = useState({ top: 0, left: 0 });
   const [selectedDoc, setSelectedDoc] = useState(null);
+
+  const menuRef = useClickOutside(() => {
+    setDocMenuVisible(false);
+  });
 
   const getBorderColor = (initial) => {
     return letterColors[initial] || 'border-gray-500';
@@ -24,8 +29,12 @@ const FrequentSites = ({ documents = [], setRecentDocuments, handleStar, onCardC
   };
 
   const openDocMenu = (e, doc) => {
-    const rect = e.target.getBoundingClientRect();
-    setDocMenuPosition({ top: rect.bottom, left: rect.left });
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDocMenuPosition({
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX
+    });
     setSelectedDoc(doc);
     setDocMenuVisible(true);
   };
@@ -93,25 +102,25 @@ const FrequentSites = ({ documents = [], setRecentDocuments, handleStar, onCardC
         ))}
       </div>
       {docMenuVisible && selectedDoc && (
-        <DocMenu
-          docId={selectedDoc.id}
-          docTitle={selectedDoc.title}
-          menuPosition={docMenuPosition}
-          isMenuVisible={docMenuVisible}
-          onEditSuccess={(id, newTitle) => {
-            // change name here
-            setRecentDocuments((prevDocs) =>
-              prevDocs.map((doc) =>
-                doc.id === id ? { ...doc, title: newTitle } : doc
-              )
-            )
-
-            setDocMenuVisible(false);
-          }}
-          onDeleteSuccess={() => {
-            setDocMenuVisible(false);
-          }}
-        />
+        <div ref={menuRef}>
+          <DocMenu
+            docId={selectedDoc.id}
+            docTitle={selectedDoc.title}
+            menuPosition={docMenuPosition}
+            isMenuVisible={docMenuVisible}
+            onEditSuccess={(id, newTitle) => {
+              setRecentDocuments((prevDocs) =>
+                prevDocs.map((doc) =>
+                  doc.id === id ? { ...doc, title: newTitle } : doc
+                )
+              );
+              setDocMenuVisible(false);
+            }}
+            onDeleteSuccess={() => {
+              setDocMenuVisible(false);
+            }}
+          />
+        </div>
       )}
     </div>
   );

@@ -120,14 +120,17 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
 
   // Hàm hiển thị menu khi click vào ba chấm
   const toggleMenu = (e, id) => {
-    // console.log(id)
-    const rect = e.target.getBoundingClientRect(); // Lấy vị trí của nút ba chấm
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
     setMenuPosition({
-      top: rect.bottom, // Vị trí menu dưới nút ba chấm
-      left: rect.left, // Căn trái menu với nút ba chấm
-      right: rect.right, // Căn phải menu với nút ba chấm
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX
     });
-    setActiveMenu(activeMenu === id ? null : id); // Toggle menu của mỗi file
+    setActiveMenu(activeMenu === id ? null : id);
+  };
+
+  const handleClickOutside = () => {
+    setActiveMenu(null);
   };
 
   // Hàm xử lý sửa tên file
@@ -403,7 +406,6 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           </div>
 
           {/* Render Menu for actions */}
-
           <FileMenu
             docId={doc.id}
             isMenuVisible={activeMenu === doc.id}
@@ -414,6 +416,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             onEditCategory={handleEditCategory}
             onDelete={handleDeleteFile}
             onDownload={handleDownloadFile}
+            onClose={handleClickOutside}
           />
         </div>
       ))}

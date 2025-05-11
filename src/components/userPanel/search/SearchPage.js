@@ -151,34 +151,20 @@ const SearchPage = () => {
 
   const toggleMenu = (e, id) => {
     e.stopPropagation();
-    const rect = e.target.getBoundingClientRect();
-    
-    // Update positions for specific document
+    const rect = e.currentTarget.getBoundingClientRect();
     setMenuPositions(prev => ({
       ...prev,
       [id]: {
-        top: rect.bottom,
-        left: rect.left,
-        right: rect.right,
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX
       }
     }));
-    
     setActiveMenu(activeMenu === id ? null : id);
   };
 
-  // Add click outside handler to close menu
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (activeMenu && !event.target.closest('.file-menu')) {
-        setActiveMenu(null);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [activeMenu]);
+  const handleClickOutside = () => {
+    setActiveMenu(null);
+  };
 
   const resetPageState = () => {
     setSearchResults([]);
@@ -541,6 +527,7 @@ const SearchPage = () => {
                     onEditCategory={handleEditCategory}
                     onDelete={handleDeleteFile}
                     onDownload={handleDownloadFile}
+                    onClose={handleClickOutside}
                   />
                 </div>
               ))}
