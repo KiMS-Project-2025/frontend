@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaFilePdf, FaDownload, FaArrowLeft } from 'react-icons/fa';
+import { FaFilePdf, FaDownload, FaArrowLeft, FaExternalLinkAlt } from 'react-icons/fa';
 import { API_URL } from '../../../constant';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -103,6 +103,11 @@ const FileViewerPage = () => {
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 3));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
 
+  const handleOpenInBrowser = () => {
+    if (!fileId) return;
+    window.open(`${API_URL}/file?id=${fileId}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -124,6 +129,13 @@ const FileViewerPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                onClick={handleOpenInBrowser}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                <FaExternalLinkAlt className="w-4 h-4" />
+                Open in Browser
+              </button>
               <button
                 onClick={handleDownload}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
