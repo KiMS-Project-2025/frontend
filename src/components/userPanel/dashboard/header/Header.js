@@ -61,7 +61,7 @@ const Header = ({ toggleDropdown, dropdownOpen }) => {
         <div className="flex flex-col md:flex-row items-center justify-between py-4 md:h-16">
           {/* Left: Logo and Dashboard title */}
           <div className="flex items-center mb-4 md:mb-0">
-            <h1 className="text-lg md:text-xl font-bold text-gray-800">KMS Dashboard</h1>
+            <h1 className="text-lg md:text-xl font-bold text-gray-800">KiMS Dashboard</h1>
           </div>
 
           {/* Center: Search bar */}

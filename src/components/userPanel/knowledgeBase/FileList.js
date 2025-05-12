@@ -35,7 +35,18 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
         const response = await fetch(`${API_URL}/category`);
         if (!response.ok) throw new Error("Failed to fetch categories");
         const data = await response.json();
-        setCategories(data);
+        
+        // Sort categories alphabetically by name
+        const sortedCategories = [...data].sort((a, b) => {
+          const nameA = (a.name || '').toLowerCase();
+          const nameB = (b.name || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        
+        console.log('Original categories:', data);
+        console.log('Sorted categories:', sortedCategories);
+        
+        setCategories(sortedCategories);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -132,12 +143,8 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
     const wouldOverflowRight = rect.left + menuWidth > windowWidth;
     
     setMenuPosition({
-      top: rect.bottom + window.scrollY,
-      // If would overflow right, position from right edge of button
-      // Otherwise position from left edge of button
-      left: wouldOverflowRight 
-        ? rect.right + window.scrollX - menuWidth 
-        : rect.left + window.scrollX
+      top: 0,
+      left: wouldOverflowRight ? -menuWidth : 0
     });
     setActiveMenu(activeMenu === id ? null : id);
   };
@@ -362,17 +369,41 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
           key={doc.id}
           className="bg-white rounded-2xl shadow hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden"
         >
-          {/* Header with PDF icon and title */}
-          <div className="p-4 flex justify-between items-center border-b border-gray-100">
-            {/* Make this area clickable to open FileView */}
-            <div
-              className="flex items-center flex-1 min-w-0 cursor-pointer"
-              onClick={() => handleFileClick(doc)}
-            >
-              <FaFilePdf className="text-red-500 text-xl" />
-              <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[180px]">
-                {doc.title || "Untitled Document"}
-              </h3>
+          <div className="p-4 flex flex-col gap-2 border-b border-gray-100">
+            {/* Title and menu button */}
+            <div className="flex items-center justify-between">
+              <div
+                className="flex items-center flex-1 min-w-0 cursor-pointer"
+                onClick={() => handleFileClick(doc)}
+              >
+                <FaFilePdf className="text-red-500 text-xl flex-shrink-0" />
+                <h3 className="ml-3 font-semibold text-gray-800 truncate max-w-[140px]">
+                  {doc.title || "Untitled Document"}
+                </h3>
+              </div>
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMenu(e, doc.id);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition hover:bg-gray-100"
+                >
+                  <FaEllipsisV />
+                </button>
+                <FileMenu
+                  docId={doc.id}
+                  isMenuVisible={activeMenu === doc.id}
+                  menuPosition={menuPosition}
+                  onEdit={() => handleEditName(doc.id)}
+                  onEditDescription={() => handleEditDescription(doc.id)}
+                  onEditCategory={() => handleEditCategory(doc.id)}
+                  onDelete={() => handleDeleteFile(doc.id)}
+                  onDownload={() => handleDownloadFile(doc.id)}
+                  onInfo={() => handleShowInfo(doc.id)}
+                  onClose={handleClickOutside}
+                />
+              </div>
             </div>
             
             {/* Category tag */}
@@ -385,32 +416,9 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
                 {doc.category_name}
               </span>
             )}
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMenu(e, doc.id);
-                }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition hover:bg-gray-100"
-              >
-                <FaEllipsisV />
-              </button>
-              <FileMenu
-                docId={doc.id}
-                isMenuVisible={activeMenu === doc.id}
-                menuPosition={menuPosition}
-                onEdit={() => handleEditName(doc.id)}
-                onEditDescription={() => handleEditDescription(doc.id)}
-                onEditCategory={() => handleEditCategory(doc.id)}
-                onDelete={() => handleDeleteFile(doc.id)}
-                onDownload={() => handleDownloadFile(doc.id)}
-                onInfo={() => handleShowInfo(doc.id)}
-                onClose={handleClickOutside}
-              />
-            </div>
           </div>
 
-          {/* PDF thumbnail preview - make this clickable too */}
+          {/* PDF thumbnail preview */}
           <div
             className="h-fix bg-gray-50 flex items-center justify-center cursor-pointer"
             onClick={() => handleFileClick(doc)}
@@ -418,9 +426,7 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             {loadingThumbnails[doc.id] ? (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-2"></div>
-                <span className="text-xs text-gray-400">
-                  Generating preview...
-                </span>
+                <span className="text-xs text-gray-400">Generating preview...</span>
               </div>
             ) : thumbnails[doc.id] ? (
               <img
@@ -432,25 +438,21 @@ const FileList = ({ filteredDocuments, setFilteredDocuments }) => {
             ) : (
               <div className="flex flex-col items-center justify-center text-gray-400">
                 <FaFilePdf className="text-gray-300 text-5xl mb-2" />
-                <span className="text-xs text-gray-400">
-                  No preview available
-                </span>
+                <span className="text-xs text-gray-400">No preview available</span>
               </div>
             )}
           </div>
 
-          {/* Document title/description and upload date - make this clickable too */}
+          {/* Document description and upload date */}
           <div
             className="p-4 cursor-pointer"
             onClick={() => handleFileClick(doc)}
           >
-            <p className="text-sm text-gray-700 font-medium mb-1">
+            <p className="text-sm text-gray-700 font-medium mb-1 line-clamp-2">
               {doc.shortDescription || doc.description || "Untitled Document"}
             </p>
             <div className="text-xs text-gray-400">
-              Uploaded:{" "}
-              {new Date(doc.modified_at).toLocaleString() ||
-                "Date not available"}
+              Uploaded: {new Date(doc.modified_at).toLocaleString() || "Date not available"}
             </div>
           </div>
         </div>

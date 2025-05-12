@@ -24,7 +24,9 @@ const AddFiletButton = ({ setFilteredDocuments, documentId }) => {
         const response = await fetch(`${API_URL}/category`);
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
-        setCategories(data);
+        // Sort categories alphabetically by name (case-insensitive)
+        const sortedCategories = [...data].sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()));
+        setCategories(sortedCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }

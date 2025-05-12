@@ -25,25 +25,10 @@ const FileMenu = ({
 
   useEffect(() => {
     if (menuPosition && isMenuVisible) {
-      const menuWidth = 192; // Width of the menu (w-48 = 12rem = 192px)
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      
-      // Calculate if menu would overflow right
-      const wouldOverflowRight = menuPosition.left + menuWidth > windowWidth;
-      
-      // Calculate if menu would overflow bottom
-      const menuHeight = 120; // Approximate height of menu
-      const wouldOverflowBottom = menuPosition.top + menuHeight > windowHeight + window.scrollY;
-      
       setMenuStyle({
-        position: 'fixed',
-        top: wouldOverflowBottom 
-          ? `${menuPosition.top - menuHeight}px` 
-          : `${menuPosition.top}px`,
-        left: wouldOverflowRight 
-          ? `${menuPosition.left - menuWidth}px` 
-          : `${menuPosition.left}px`,
+        position: 'absolute',
+        top: `${menuPosition.top + 24}px`,
+        left: `${menuPosition.left}px`,
         zIndex: 50
       });
     }
@@ -63,21 +48,21 @@ const FileMenu = ({
   return (
     <div
       ref={menuRef}
-      className="w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
+      className="w-12 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
       style={menuStyle}
     >
       {menuItems.map((item, index) => (
         <button
           key={index}
           onClick={item.onClick}
-          className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
+          title={item.text}
+          className={`w-full px-3 py-2 text-left text-sm flex items-center justify-center ${
             item.isDanger 
               ? 'text-red-600 hover:bg-red-50' 
               : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <span className="flex-shrink-0">{item.icon}</span>
-          <span className="flex-1">{item.text}</span>
+          {item.icon}
         </button>
       ))}
     </div>

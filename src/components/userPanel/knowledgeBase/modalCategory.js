@@ -11,9 +11,11 @@ const ModalCategory = ({ isOpen, onClose, onSave, initialCategory }) => {
         const response = await fetch(`${API_URL}/category`);
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
-        setCategories(data);
-        if (!initialCategory && data.length > 0) {
-          setSelectedCategory(data[0].id);
+        // Sort categories alphabetically by name (case-insensitive)
+        const sortedCategories = [...data].sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()));
+        setCategories(sortedCategories);
+        if (!initialCategory && sortedCategories.length > 0) {
+          setSelectedCategory(sortedCategories[0].id);
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
